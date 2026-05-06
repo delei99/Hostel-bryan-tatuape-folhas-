@@ -270,7 +270,8 @@ export default function Home() {
         
         const dailyValue = convertCurrencyToNumber(currentGuest.daily);
         const previousBalance = convertCurrencyToNumber(currentGuest.balance);
-        const totalDebt = dailyValue + previousBalance; // DIÁRIA + SALDO = TOTAL DO DIA (dívida)
+        // Se previousBalance é positivo (crédito), SUBTRAI da dívida. Se negativo (dívida), SOMA.
+        const totalDebt = dailyValue - previousBalance; // DIÁRIA - CRÉDITO = DÍVIDA DO DIA
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
