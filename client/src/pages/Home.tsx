@@ -31,6 +31,11 @@ interface RoomData {
 const STORAGE_KEY = "hostel_rooms_data";
 const NUM_ROOMS = 7;
 
+// Obter dia atual do mês
+const getCurrentDay = (): number => {
+  return new Date().getDate();
+};
+
 // Verificar se é após 00:00 (meia-noite)
 const isAfterMidnight = (): boolean => {
   const now = new Date();
@@ -743,7 +748,9 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {currentRoom.guests.map((guest, index) => {
-                    const isLineBlocked = index < 5 && isAfterMidnight();
+                    const currentDay = getCurrentDay();
+                    const guestDay = parseInt(guest.day, 10);
+                    const isLineBlocked = guestDay === currentDay && isAfterMidnight();
                     return (
                     <tr
                       key={guest.id}
@@ -754,9 +761,9 @@ export default function Home() {
                       <td className="px-3 py-3">
                         {index < 31 ? (
                           <div className={`font-semibold ${
-                            isLineBlocked ? "text-gray-500 bg-gray-100 px-2 py-1 rounded" : "text-gray-900"
+                            isLineBlocked ? "text-gray-500 bg-yellow-100 px-2 py-1 rounded border border-yellow-300" : "text-gray-900"
                           }`}
-                          title={isLineBlocked ? "Visualização apenas - Bloqueado após 00:00" : ""}>
+                          title={isLineBlocked ? "Dia de hoje - Visualização apenas após 00:00" : ""}>
                             {guest.day}
                           </div>
                         ) : (
