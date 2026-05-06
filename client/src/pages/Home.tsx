@@ -274,25 +274,19 @@ export default function Home() {
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        if (totalBalance > 0 && currentPayment === 0) {
+        if (currentPayment > totalBalance && currentPayment > 0) {
+          const credit = currentPayment - totalBalance;
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
-            balance: formatCurrency(String(Math.round(totalBalance * 100))),
+            balance: formatCurrency(String(Math.round(credit * 100))),
           };
-        } else if (currentPayment > 0 && totalBalance > 0) {
+        } else if (totalBalance > currentPayment && totalBalance > 0) {
           const remainingBalance = totalBalance - currentPayment;
-          if (remainingBalance > 0) {
-            updatedGuests[currentGuestIndex + 1] = {
-              ...nextGuest,
-              balance: formatCurrency(String(Math.round(remainingBalance * 100))),
-            };
-          } else {
-            updatedGuests[currentGuestIndex + 1] = {
-              ...nextGuest,
-              balance: "",
-            };
-          }
-        } else if (totalBalance === 0 && currentPayment === 0) {
+          updatedGuests[currentGuestIndex + 1] = {
+            ...nextGuest,
+            balance: formatCurrency(String(Math.round(remainingBalance * 100))),
+          };
+        } else {
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
             balance: "",
