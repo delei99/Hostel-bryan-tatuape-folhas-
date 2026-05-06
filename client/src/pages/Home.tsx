@@ -35,10 +35,36 @@ export default function Home() {
     })),
   ]);
 
+  const formatCurrency = (value: string): string => {
+    // Remove tudo que não é número
+    let numericValue = value.replace(/\D/g, "");
+    
+    // Se vazio, retorna vazio
+    if (!numericValue) return "";
+    
+    // Converte para número e divide por 100 para obter os centavos
+    const numberValue = parseInt(numericValue, 10);
+    const formatted = (numberValue / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    
+    return formatted;
+  };
+
   const handleInputChange = (id: string, field: keyof Guest, value: string) => {
+    let finalValue = value;
+    
+    // Aplicar formatação de moeda para SALDO e PAGAMENTO
+    if ((field === "balance" || field === "payment") && value) {
+      finalValue = formatCurrency(value);
+    }
+    
     setGuests(
       guests.map((guest) =>
-        guest.id === id ? { ...guest, [field]: value } : guest
+        guest.id === id ? { ...guest, [field]: finalValue } : guest
       )
     );
   };
@@ -209,7 +235,7 @@ export default function Home() {
                         onChange={(e) =>
                           handleInputChange(guest.id, "balance", e.target.value)
                         }
-                        placeholder="R$ 0,00"
+                        placeholder="Digite o valor"
                         className="border-gray-300 text-sm"
                       />
                     </td>
@@ -220,7 +246,7 @@ export default function Home() {
                         onChange={(e) =>
                           handleInputChange(guest.id, "payment", e.target.value)
                         }
-                        placeholder="R$ 0,00"
+                        placeholder="Digite o valor"
                         className={`border-gray-300 text-sm ${
                           guest.payment ? "text-red-600 font-semibold" : ""
                         }`}
