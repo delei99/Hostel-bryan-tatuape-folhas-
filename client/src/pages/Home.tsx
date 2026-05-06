@@ -920,19 +920,27 @@ export default function Home() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <Input
-                          type="text"
-                          value={guest.balance}
-                          onChange={(e) =>
-                            handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
-                          }
-                          placeholder="Valor"
-                          className={`border-gray-300 text-xs h-8 ${
-                            guest.balance ? "text-blue-600 font-semibold" : ""
-                          }`}
-                          disabled={isLineBlocked}
-                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
-                        />
+                        {(() => {
+                          const balanceValue = convertCurrencyToNumber(guest.balance);
+                          const paymentValue = convertCurrencyToNumber(guest.payment);
+                          const isPaymentGreater = paymentValue > balanceValue && guest.balance && guest.payment;
+                          
+                          return (
+                            <Input
+                              type="text"
+                              value={guest.balance}
+                              onChange={(e) =>
+                                handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
+                              }
+                              placeholder="Valor"
+                              className={`border-gray-300 text-xs h-8 ${
+                                isPaymentGreater ? "text-red-600 font-semibold border-red-500" : guest.balance ? "text-blue-600 font-semibold" : ""
+                              }`}
+                              disabled={isLineBlocked}
+                              title={isPaymentGreater ? "Atenção: Pagamento maior que saldo!" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                            />
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-3">
                         <Input
