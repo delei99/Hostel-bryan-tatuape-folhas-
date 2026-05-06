@@ -914,19 +914,39 @@ export default function Home() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <Input
-                          type="text"
-                          value={guest.balance}
-                          onChange={(e) =>
-                            handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
+                        {(() => {
+                          const currentGuestIndex = currentRoom.guests.findIndex((g) => g.id === guest.id);
+                          const balanceValue = convertCurrencyToNumber(guest.balance);
+                          const paymentValue = convertCurrencyToNumber(guest.payment);
+                          const dailyValue = convertCurrencyToNumber(guest.daily);
+                          const totalBalance = dailyValue + balanceValue;
+                          
+                          // Calcula o saldo que passará para o dia seguinte
+                          let nextDayBalance = 0;
+                          if (paymentValue > totalBalance && paymentValue > 0) {
+                            nextDayBalance = paymentValue - totalBalance; // Crédito
+                          } else if (totalBalance > paymentValue && totalBalance > 0) {
+                            nextDayBalance = totalBalance - paymentValue; // Saldo restante
                           }
-                          placeholder="Valor"
-                          className={`border-gray-300 text-xs h-8 ${
-                            guest.balance && convertCurrencyToNumber(guest.balance) > 0 ? "text-red-600 font-semibold" : ""
-                          }`}
-                          disabled={isLineBlocked}
-                          title={guest.balance && convertCurrencyToNumber(guest.balance) > 0 ? "Saldo positivo - Passará para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
-                        />
+                          
+                          const isRedText = nextDayBalance > 0;
+                          
+                          return (
+                            <Input
+                              type="text"
+                              value={guest.balance}
+                              onChange={(e) =>
+                                handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
+                              }
+                              placeholder="Valor"
+                              className={`border-gray-300 text-xs h-8 ${
+                                isRedText ? "text-red-600 font-semibold" : ""
+                              }`}
+                              disabled={isLineBlocked}
+                              title={isRedText ? "Saldo positivo para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                            />
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-3">
                         <Input
