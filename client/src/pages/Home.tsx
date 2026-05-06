@@ -273,14 +273,16 @@ export default function Home() {
         const currentGuest = updatedGuests[currentGuestIndex];
         
         const dailyValue = convertCurrencyToNumber(currentGuest.daily);
-        const previousLaunch = convertCurrencyToNumber(currentGuest.launch);
-        // Se previousLaunch é positivo (crédito), SUBTRAI da dívida. Se negativo (dívida), SOMA.
-        const totalDebt = dailyValue - previousLaunch; // DIÁRIA - CRÉDITO = DÍVIDA DO DIA
+        const launchValue = convertCurrencyToNumber(currentGuest.launch);
+        // DIÁRIA + LANÇAMENTO = DÍVIDA ACUMULADA DO HÓSPEDE
+        const totalDebt = dailyValue + launchValue;
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        // Calcula o saldo final: TOTAL - PAGAMENTO
-        const finalBalance = totalDebt - currentPayment;
+        // Calcula o saldo final: PAGAMENTO - (DIÁRIA + LANÇAMENTO)
+        // Positivo = crédito a favor do hóspede
+        // Negativo = débito do hóspede
+        const finalBalance = currentPayment - totalDebt;
         
         if (finalBalance !== 0) {
           updatedGuests[currentGuestIndex] = {
@@ -983,14 +985,25 @@ export default function Home() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <Input
-                          type="text"
-                          value={guest.finalBalance}
-                          readOnly
-                          placeholder="-"
-                          className={`border-gray-300 text-xs h-8 text-blue-600 font-semibold bg-gray-50`}
-                          title="Saldo Final (calculado automaticamente)"
-                        />
+                        {(() => {
+                          const finalBalanceValue = convertCurrencyToNumber(guest.finalBalance);
+                          let displayValue = guest.finalBalance;
+                          if (finalBalanceValue > 0) {
+                            displayValue = guest.finalBalance + "+";
+                          } else if (finalBalanceValue < 0) {
+                            displayValue = guest.finalBalance + "-";
+                          }
+                          return (
+                            <Input
+                              type="text"
+                              value={displayValue}
+                              readOnly
+                              placeholder="-"
+                              className={`border-gray-300 text-xs h-8 text-blue-600 font-semibold bg-gray-50`}
+                              title="Saldo Final (calculado automaticamente)"
+                            />
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-3">
                         <Input
