@@ -939,7 +939,7 @@ export default function Home() {
                               placeholder="Valor"
                               className="border-gray-300 text-xs h-8 text-blue-600 font-semibold"
                               disabled={isLineBlocked}
-                              title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                              title={isPaymentGreaterThanTotal ? "Crédito a receber no dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                             />
                           );
                         })()}
