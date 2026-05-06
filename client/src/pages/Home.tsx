@@ -14,8 +14,8 @@ interface Guest {
 }
 
 export default function Home() {
-  const [guests, setGuests] = useState<Guest[]>(
-    Array.from({ length: 31 }, (_, index) => ({
+  const [guests, setGuests] = useState<Guest[]>([
+    ...Array.from({ length: 31 }, (_, index) => ({
       id: String(index + 1),
       day: String(index + 1).padStart(2, "0"),
       guestName: "",
@@ -23,8 +23,17 @@ export default function Home() {
       balance: "",
       payment: "",
       paymentMethod: "",
-    }))
-  );
+    })),
+    ...Array.from({ length: 5 }, (_, index) => ({
+      id: String(32 + index),
+      day: "",
+      guestName: "",
+      reservationEngine: "",
+      balance: "",
+      payment: "",
+      paymentMethod: "",
+    })),
+  ]);
 
   const handleInputChange = (id: string, field: keyof Guest, value: string) => {
     setGuests(
@@ -36,12 +45,11 @@ export default function Home() {
 
   const handleAddRow = () => {
     const newId = String(Math.max(...guests.map((g) => parseInt(g.id)), 0) + 1);
-    const newDay = String(guests.length + 1).padStart(2, "0");
     setGuests([
       ...guests,
       {
         id: newId,
-        day: newDay,
+        day: "",
         guestName: "",
         reservationEngine: "",
         balance: "",
@@ -152,9 +160,21 @@ export default function Home() {
                     } hover:bg-blue-50 transition-colors`}
                   >
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-gray-900 text-sm">
-                        {guest.day}
-                      </div>
+                      {index < 31 ? (
+                        <div className="font-semibold text-gray-900 text-sm">
+                          {guest.day}
+                        </div>
+                      ) : (
+                        <Input
+                          type="text"
+                          value={guest.day}
+                          onChange={(e) =>
+                            handleInputChange(guest.id, "day", e.target.value)
+                          }
+                          placeholder="Dia"
+                          className="border-gray-300 text-sm"
+                        />
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Input
