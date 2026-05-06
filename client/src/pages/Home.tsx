@@ -36,13 +36,10 @@ export default function Home() {
   ]);
 
   const formatCurrency = (value: string): string => {
-    // Remove tudo que não é número
     let numericValue = value.replace(/\D/g, "");
     
-    // Se vazio, retorna vazio
     if (!numericValue) return "";
     
-    // Converte para número e divide por 100 para obter os centavos
     const numberValue = parseInt(numericValue, 10);
     const formatted = (numberValue / 100).toLocaleString("pt-BR", {
       style: "currency",
@@ -54,19 +51,66 @@ export default function Home() {
     return formatted;
   };
 
+  const convertCurrencyToNumber = (value: string): number => {
+    const cleaned = value.replace(/R\$\s?/g, "").replace(/\./g, "").replace(",", ".");
+    return parseFloat(cleaned) || 0;
+  };
+
   const handleInputChange = (id: string, field: keyof Guest, value: string) => {
     let finalValue = value;
     
-    // Aplicar formatação de moeda para SALDO e PAGAMENTO
     if ((field === "balance" || field === "payment") && value) {
       finalValue = formatCurrency(value);
     }
     
-    setGuests(
-      guests.map((guest) =>
-        guest.id === id ? { ...guest, [field]: finalValue } : guest
-      )
+    const updatedGuests = guests.map((guest) =>
+      guest.id === id ? { ...guest, [field]: finalValue } : guest
     );
+    
+    // Lógica de carregamento de saldo entre dias
+    if (field === "balance" || field === "payment") {
+      const currentGuestIndex = updatedGuests.findIndex((g) => g.id === id);
+      
+      if (currentGuestIndex !== -1 && currentGuestIndex < updatedGuests.length - 1) {
+        const currentGuest = updatedGuests[currentGuestIndex];
+        const nextGuest = updatedGuests[currentGuestIndex + 1];
+        
+        const currentBalance = convertCurrencyToNumber(currentGuest.balance);
+        const currentPayment = convertCurrencyToNumber(currentGuest.payment);
+        
+        // Se há saldo e não há pagamento, o saldo vai para o próximo dia
+        if (currentBalance > 0 && currentPayment === 0) {
+          updatedGuests[currentGuestIndex + 1] = {
+            ...nextGuest,
+            balance: formatCurrency(String(Math.round(currentBalance * 100))),
+          };
+        }
+        // Se há pagamento, diminui do saldo do próximo dia
+        else if (currentPayment > 0 && currentBalance > 0) {
+          const remainingBalance = currentBalance - currentPayment;
+          if (remainingBalance > 0) {
+            updatedGuests[currentGuestIndex + 1] = {
+              ...nextGuest,
+              balance: formatCurrency(String(Math.round(remainingBalance * 100))),
+            };
+          } else {
+            updatedGuests[currentGuestIndex + 1] = {
+              ...nextGuest,
+              balance: "",
+            };
+          }
+        }
+        // Se não há saldo ou foi zerado, limpa o saldo do próximo dia
+        else if (currentBalance === 0 && currentPayment === 0) {
+          updatedGuests[currentGuestIndex + 1] = {
+            ...nextGuest,
+            balance: "",
+          };
+        }
+      }
+    }
+    
+    setGuests(updatedGuests);
   };
 
   const handleAddRow = () => {
@@ -290,6 +334,9 @@ export default function Home() {
         <div className="mt-6 bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-300">
           <p className="text-xs text-gray-600">
             <strong>Formas de Pagamento:</strong> PIX, DN (Dinheiro), CC (Cartão de Crédito), CD (Cartão de Débito), AP (Antecipado), TB (Transferência Bancária), QR (QR Code), DB (Débito)
+          </p>
+          <p className="text-xs text-gray-600 mt-2">
+            <strong>Nota:</strong> Se houver saldo e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
           </p>
         </div>
       </div>
