@@ -991,7 +991,7 @@ export default function Home() {
                           if (finalBalanceValue > 0) {
                             displayValue = guest.finalBalance + "+";
                           } else if (finalBalanceValue < 0) {
-                            displayValue = guest.finalBalance + "-";
+                            displayValue = guest.finalBalance; // Já tem o sinal de menos
                           }
                           return (
                             <Input
