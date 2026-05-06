@@ -279,10 +279,10 @@ export default function Home() {
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        // Calcula o saldo final: PAGAMENTO - (DIÁRIA + LANÇAMENTO)
-        // Positivo = crédito a favor do hóspede
-        // Negativo = débito do hóspede
-        const finalBalance = currentPayment - totalDebt;
+        // Calcula o saldo final: (DIÁRIA + LANÇAMENTO) - PAGAMENTO
+        // Positivo = débito (hóspede ainda deve)
+        // Negativo = crédito (hóspede pagou a mais)
+        const finalBalance = totalDebt - currentPayment;
         
         if (finalBalance !== 0) {
           updatedGuests[currentGuestIndex] = {
