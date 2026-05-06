@@ -743,7 +743,7 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {currentRoom.guests.map((guest, index) => {
-                    const isLineBlocked = index < 31 && isAfterMidnight();
+                    const isLineBlocked = index < 5 && isAfterMidnight();
                     return (
                     <tr
                       key={guest.id}
@@ -754,9 +754,9 @@ export default function Home() {
                       <td className="px-3 py-3">
                         {index < 31 ? (
                           <div className={`font-semibold ${
-                            isLineBlocked ? "text-gray-500" : "text-gray-900"
+                            isLineBlocked ? "text-gray-500 bg-gray-100 px-2 py-1 rounded" : "text-gray-900"
                           }`}
-                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}>
+                          title={isLineBlocked ? "Visualização apenas - Bloqueado após 00:00" : ""}>
                             {guest.day}
                           </div>
                         ) : (
