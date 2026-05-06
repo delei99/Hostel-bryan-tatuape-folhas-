@@ -8,6 +8,7 @@ interface Guest {
   day: string;
   guestName: string;
   reservationEngine: string;
+  daily: string;
   balance: string;
   payment: string;
   paymentMethod: string;
@@ -41,6 +42,7 @@ export default function Home() {
           day: String(index + 1).padStart(2, "0"),
           guestName: "",
           reservationEngine: "",
+          daily: "",
           balance: "",
           payment: "",
           paymentMethod: "",
@@ -50,6 +52,7 @@ export default function Home() {
           day: "",
           guestName: "",
           reservationEngine: "",
+          daily: "",
           balance: "",
           payment: "",
           paymentMethod: "",
@@ -109,7 +112,7 @@ export default function Home() {
   const handleInputChange = (id: string, field: keyof Guest, value: string) => {
     let finalValue = value;
     
-    if ((field === "balance" || field === "payment") && value) {
+    if ((field === "daily" || field === "balance" || field === "payment") && value) {
       finalValue = formatCurrency(value);
     }
     
@@ -118,23 +121,30 @@ export default function Home() {
     );
     
     // Lógica de carregamento de saldo entre dias
-    if (field === "balance" || field === "payment") {
+    if (field === "daily" || field === "balance" || field === "payment") {
       const currentGuestIndex = updatedGuests.findIndex((g) => g.id === id);
       
       if (currentGuestIndex !== -1 && currentGuestIndex < updatedGuests.length - 1) {
         const currentGuest = updatedGuests[currentGuestIndex];
         const nextGuest = updatedGuests[currentGuestIndex + 1];
         
-        const currentBalance = convertCurrencyToNumber(currentGuest.balance);
+        // Calcular o saldo total (saldo anterior + diária)
+        const dailyValue = convertCurrencyToNumber(currentGuest.daily);
+        const previousBalance = convertCurrencyToNumber(currentGuest.balance);
+        const totalBalance = dailyValue + previousBalance;
+        
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        if (currentBalance > 0 && currentPayment === 0) {
+        // Se há saldo total e não há pagamento, o saldo vai para o próximo dia
+        if (totalBalance > 0 && currentPayment === 0) {
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
-            balance: formatCurrency(String(Math.round(currentBalance * 100))),
+            balance: formatCurrency(String(Math.round(totalBalance * 100))),
           };
-        } else if (currentPayment > 0 && currentBalance > 0) {
-          const remainingBalance = currentBalance - currentPayment;
+        }
+        // Se há pagamento, diminui do saldo do próximo dia
+        else if (currentPayment > 0 && totalBalance > 0) {
+          const remainingBalance = totalBalance - currentPayment;
           if (remainingBalance > 0) {
             updatedGuests[currentGuestIndex + 1] = {
               ...nextGuest,
@@ -146,7 +156,9 @@ export default function Home() {
               balance: "",
             };
           }
-        } else if (currentBalance === 0 && currentPayment === 0) {
+        }
+        // Se não há saldo ou foi zerado, limpa o saldo do próximo dia
+        else if (totalBalance === 0 && currentPayment === 0) {
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
             balance: "",
@@ -167,6 +179,7 @@ export default function Home() {
         day: "",
         guestName: "",
         reservationEngine: "",
+        daily: "",
         balance: "",
         payment: "",
         paymentMethod: "",
@@ -198,11 +211,12 @@ export default function Home() {
 
   const handleExport = () => {
     const csv = [
-      ["DIA", "NOME DO HÓSPEDE", "MOTOR DE RESERVA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
+      ["DIA", "NOME DO HÓSPEDE", "MOTOR DE RESERVA", "DIÁRIA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
       ...guests.map((g) => [
         g.day,
         g.guestName,
         g.reservationEngine,
+        g.daily,
         g.balance,
         g.payment,
         g.paymentMethod,
@@ -226,6 +240,7 @@ export default function Home() {
         ...g,
         guestName: "",
         reservationEngine: "",
+        daily: "",
         balance: "",
         payment: "",
         paymentMethod: "",
@@ -310,6 +325,9 @@ export default function Home() {
                     MOTOR DE RESERVA
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-sm">
+                    DIÁRIA
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-sm">
                     SALDO
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-sm">
@@ -377,6 +395,19 @@ export default function Home() {
                     <td className="px-4 py-3">
                       <Input
                         type="text"
+                        value={guest.daily}
+                        onChange={(e) =>
+                          handleInputChange(guest.id, "daily", e.target.value)
+                        }
+                        placeholder="Digite o valor"
+                        className={`border-gray-300 text-sm ${
+                          guest.daily ? "text-blue-600 font-semibold" : ""
+                        }`}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Input
+                        type="text"
                         value={guest.balance}
                         onChange={(e) =>
                           handleInputChange(guest.id, "balance", e.target.value)
@@ -438,7 +469,7 @@ export default function Home() {
             <strong>Formas de Pagamento:</strong> PIX, DN (Dinheiro), CC (Cartão de Crédito), CD (Cartão de Débito), AP (Antecipado), TB (Transferência Bancária), QR (QR Code), DB (Débito)
           </p>
           <p className="text-xs text-gray-600 mt-2">
-            <strong>Nota:</strong> Se houver saldo e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
+            <strong>Nota:</strong> A coluna DIÁRIA é somada ao SALDO. Se houver saldo total e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
           </p>
           <p className="text-xs text-gray-600 mt-2">
             <strong>Dados salvos automaticamente:</strong> Todos os seus dados são salvos automaticamente no navegador. Use os botões Desfazer/Refazer para navegar pelo histórico de alterações.
