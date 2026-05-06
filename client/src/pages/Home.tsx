@@ -31,6 +31,12 @@ interface RoomData {
 const STORAGE_KEY = "hostel_rooms_data";
 const NUM_ROOMS = 7;
 
+// Verificar se é após 00:00 (meia-noite)
+const isAfterMidnight = (): boolean => {
+  const now = new Date();
+  return now.getHours() === 0 && now.getMinutes() < 1;
+};
+
 // Capitalizar primeira letra
 const capitalizeFirstLetter = (str: string): string => {
   if (!str) return "";
@@ -745,7 +751,10 @@ export default function Home() {
                     >
                       <td className="px-3 py-3">
                         {index < 31 ? (
-                          <div className="font-semibold text-gray-900">
+                          <div className={`font-semibold ${
+                            isAfterMidnight() ? "text-gray-500 bg-gray-100 px-2 py-1 rounded" : "text-gray-900"
+                          }`}
+                          title={isAfterMidnight() ? "Edição bloqueada após 00:00" : ""}>
                             {guest.day}
                           </div>
                         ) : (
@@ -757,6 +766,8 @@ export default function Home() {
                             }
                             placeholder="Dia"
                             className="border-gray-300 text-xs h-8"
+                            disabled={isAfterMidnight()}
+                            title={isAfterMidnight() ? "Edição bloqueada após 00:00" : ""}
                           />
                         )}
                       </td>
