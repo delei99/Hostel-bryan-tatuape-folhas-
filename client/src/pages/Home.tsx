@@ -236,7 +236,9 @@ export default function Home() {
                           handleInputChange(guest.id, "balance", e.target.value)
                         }
                         placeholder="Digite o valor"
-                        className="border-gray-300 text-sm"
+                        className={`border-gray-300 text-sm ${
+                          guest.balance ? "text-blue-600 font-semibold" : ""
+                        }`}
                       />
                     </td>
                     <td className="px-4 py-3">
