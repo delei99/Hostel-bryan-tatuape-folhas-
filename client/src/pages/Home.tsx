@@ -22,47 +22,70 @@ export default function Home() {
   const [history, setHistory] = useState<Guest[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  // Normalizar dados para garantir que todos os campos estejam definidos
+  const normalizeGuest = (guest: any): Guest => ({
+    id: guest.id || "",
+    day: guest.day ?? "",
+    guestName: guest.guestName ?? "",
+    reservationEngine: guest.reservationEngine ?? "",
+    daily: guest.daily ?? "",
+    balance: guest.balance ?? "",
+    payment: guest.payment ?? "",
+    paymentMethod: guest.paymentMethod ?? "",
+  });
+
   // Carregar dados do localStorage ao montar o componente
   useEffect(() => {
     const savedGuests = localStorage.getItem(STORAGE_KEY);
     const savedHistory = localStorage.getItem(HISTORY_KEY);
 
     if (savedGuests) {
-      const parsedGuests = JSON.parse(savedGuests);
-      setGuests(parsedGuests);
-      if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
-        setHistory(parsedHistory);
-        setHistoryIndex(parsedHistory.length - 1);
+      try {
+        const parsedGuests = JSON.parse(savedGuests).map(normalizeGuest);
+        setGuests(parsedGuests);
+        if (savedHistory) {
+          const parsedHistory = JSON.parse(savedHistory).map((guests: any[]) =>
+            guests.map(normalizeGuest)
+          );
+          setHistory(parsedHistory);
+          setHistoryIndex(parsedHistory.length - 1);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do localStorage:", error);
+        createInitialGuests();
       }
     } else {
-      const initialGuests = [
-        ...Array.from({ length: 31 }, (_, index) => ({
-          id: String(index + 1),
-          day: String(index + 1).padStart(2, "0"),
-          guestName: "",
-          reservationEngine: "",
-          daily: "",
-          balance: "",
-          payment: "",
-          paymentMethod: "",
-        })),
-        ...Array.from({ length: 5 }, (_, index) => ({
-          id: String(32 + index),
-          day: "",
-          guestName: "",
-          reservationEngine: "",
-          daily: "",
-          balance: "",
-          payment: "",
-          paymentMethod: "",
-        })),
-      ];
-      setGuests(initialGuests);
-      setHistory([initialGuests]);
-      setHistoryIndex(0);
+      createInitialGuests();
     }
   }, []);
+
+  const createInitialGuests = () => {
+    const initialGuests = [
+      ...Array.from({ length: 31 }, (_, index) => ({
+        id: String(index + 1),
+        day: String(index + 1).padStart(2, "0"),
+        guestName: "",
+        reservationEngine: "",
+        daily: "",
+        balance: "",
+        payment: "",
+        paymentMethod: "",
+      })),
+      ...Array.from({ length: 5 }, (_, index) => ({
+        id: String(32 + index),
+        day: "",
+        guestName: "",
+        reservationEngine: "",
+        daily: "",
+        balance: "",
+        payment: "",
+        paymentMethod: "",
+      })),
+    ];
+    setGuests(initialGuests);
+    setHistory([initialGuests]);
+    setHistoryIndex(0);
+  };
 
   // Salvar dados no localStorage sempre que guests mudar
   useEffect(() => {
