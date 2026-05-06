@@ -928,7 +928,7 @@ export default function Home() {
                               }
                               placeholder="Valor"
                               className={`border-gray-300 text-xs h-8 ${
-                                isCredit ? "text-red-600 font-semibold" : guest.balance ? "text-blue-600 font-semibold" : ""
+                                isCredit || (guest.balance && convertCurrencyToNumber(guest.balance) > 0) ? "text-red-600 font-semibold" : ""
                               }`}
                               disabled={isLineBlocked}
                               title={isCredit ? "Crédito - Passará para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
