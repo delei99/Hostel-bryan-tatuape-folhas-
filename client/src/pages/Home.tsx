@@ -272,9 +272,10 @@ export default function Home() {
       if (currentGuestIndex !== -1) {
         const currentGuest = updatedGuests[currentGuestIndex];
         
-        const dailyValue = convertCurrencyToNumber(currentGuest.daily);
-        const launchValue = convertCurrencyToNumber(currentGuest.launch);
-        // DIÁRIA + LANÇAMENTO = DÍVIDA ACUMULADA DO HÓSPEDE
+        // DIÁRIA e LANÇAMENTO são dívidas (negativas)
+        const dailyValue = -Math.abs(convertCurrencyToNumber(currentGuest.daily));
+        const launchValue = -Math.abs(convertCurrencyToNumber(currentGuest.launch));
+        // DIÁRIA + LANÇAMENTO = DÍVIDA ACUMULADA DO HÓSPEDE (negativa)
         const totalDebt = dailyValue + launchValue;
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
