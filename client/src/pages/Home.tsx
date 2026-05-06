@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Download, RotateCcw, RotateCw } from "lucide-react";
+import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File } from "lucide-react";
 
 interface Guest {
   id: string;
   day: string;
-  guestName: string;
+  firstName: string;
+  lastName: string;
+  documentNumber: string;
+  documentFile: string;
+  documentFileName: string;
   reservationEngine: string;
   daily: string;
   balance: string;
@@ -24,11 +28,21 @@ interface RoomData {
 const STORAGE_KEY = "hostel_rooms_data";
 const NUM_ROOMS = 7;
 
+// Capitalizar primeira letra
+const capitalizeFirstLetter = (str: string): string => {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 // Normalizar dados para garantir que todos os campos estejam definidos
 const normalizeGuest = (guest: any): Guest => ({
   id: guest.id || "",
   day: guest.day ?? "",
-  guestName: guest.guestName ?? "",
+  firstName: guest.firstName ?? "",
+  lastName: guest.lastName ?? "",
+  documentNumber: guest.documentNumber ?? "",
+  documentFile: guest.documentFile ?? "",
+  documentFileName: guest.documentFileName ?? "",
   reservationEngine: guest.reservationEngine ?? "",
   daily: guest.daily ?? "",
   balance: guest.balance ?? "",
@@ -42,7 +56,11 @@ const createInitialGuestsForRoom = (): Guest[] => {
     ...Array.from({ length: 31 }, (_, index) => ({
       id: String(index + 1),
       day: String(index + 1).padStart(2, "0"),
-      guestName: "",
+      firstName: "",
+      lastName: "",
+      documentNumber: "",
+      documentFile: "",
+      documentFileName: "",
       reservationEngine: "",
       daily: "",
       balance: "",
@@ -52,7 +70,11 @@ const createInitialGuestsForRoom = (): Guest[] => {
     ...Array.from({ length: 5 }, (_, index) => ({
       id: String(32 + index),
       day: "",
-      guestName: "",
+      firstName: "",
+      lastName: "",
+      documentNumber: "",
+      documentFile: "",
+      documentFileName: "",
       reservationEngine: "",
       daily: "",
       balance: "",
@@ -147,6 +169,11 @@ export default function Home() {
 
     let finalValue = value;
     
+    // Capitalizar primeira letra para nome e sobrenome
+    if ((field === "firstName" || field === "lastName") && value) {
+      finalValue = capitalizeFirstLetter(value);
+    }
+    
     if ((field === "daily" || field === "balance" || field === "payment") && value) {
       finalValue = formatCurrency(value);
     }
@@ -201,6 +228,30 @@ export default function Home() {
     updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
   };
 
+  const handleFileUpload = (roomNumber: number, id: string, file: File) => {
+    const room = rooms.find((r) => r.roomNumber === roomNumber);
+    if (!room) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const fileContent = e.target?.result as string;
+      const updatedGuests = room.guests.map((guest) =>
+        guest.id === id
+          ? {
+              ...guest,
+              documentFile: fileContent,
+              documentFileName: file.name,
+            }
+          : guest
+      );
+
+      const newHistory = room.history.slice(0, room.historyIndex + 1);
+      newHistory.push(updatedGuests);
+      updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddRow = (roomNumber: number) => {
     const room = rooms.find((r) => r.roomNumber === roomNumber);
     if (!room) return;
@@ -211,7 +262,11 @@ export default function Home() {
       {
         id: newId,
         day: "",
-        guestName: "",
+        firstName: "",
+        lastName: "",
+        documentNumber: "",
+        documentFile: "",
+        documentFileName: "",
         reservationEngine: "",
         daily: "",
         balance: "",
@@ -256,10 +311,12 @@ export default function Home() {
     if (!room) return;
 
     const csv = [
-      ["DIA", "NOME DO HÓSPEDE", "MOTOR DE RESERVA", "DIÁRIA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
+      ["DIA", "NOME", "SOBRENOME", "DOCUMENTO", "MOTOR DE RESERVA", "DIÁRIA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
       ...room.guests.map((g) => [
         g.day,
-        g.guestName,
+        g.firstName,
+        g.lastName,
+        g.documentNumber,
         g.reservationEngine,
         g.daily,
         g.balance,
@@ -286,7 +343,11 @@ export default function Home() {
     if (confirm("Tem certeza que deseja limpar todos os dados deste quarto? Esta ação não pode ser desfeita.")) {
       const clearedGuests = room.guests.map((g) => ({
         ...g,
-        guestName: "",
+        firstName: "",
+        lastName: "",
+        documentNumber: "",
+        documentFile: "",
+        documentFileName: "",
         reservationEngine: "",
         daily: "",
         balance: "",
@@ -336,7 +397,7 @@ export default function Home() {
 
       {/* Conteúdo Principal */}
       <div className="flex-1 p-6 overflow-auto">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-full mx-auto">
           {/* Header */}
           <div className="mb-8">
             <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-600">
@@ -397,33 +458,20 @@ export default function Home() {
           {/* Table */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-blue-600 text-white">
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      DIA
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      NOME DO HÓSPEDE
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      MOTOR DE RESERVA
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      DIÁRIA
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      SALDO
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      PAGAMENTO
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm">
-                      FORMA DE PAGAMENTO
-                    </th>
-                    <th className="px-4 py-3 text-center font-semibold text-sm">
-                      AÇÃO
-                    </th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">DIA</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">NOME</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">SOBRENOME</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">DOCUMENTO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">ARQUIVO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">MOTOR RESERVA</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">DIÁRIA</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">SALDO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">PAGAMENTO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">FORMA PAG.</th>
+                    <th className="px-3 py-3 text-center font-semibold text-xs">AÇÃO</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -434,9 +482,9 @@ export default function Home() {
                         index % 2 === 0 ? "bg-white" : "bg-slate-50"
                       } hover:bg-blue-50 transition-colors`}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         {index < 31 ? (
-                          <div className="font-semibold text-gray-900 text-sm">
+                          <div className="font-semibold text-gray-900">
                             {guest.day}
                           </div>
                         ) : (
@@ -447,22 +495,73 @@ export default function Home() {
                               handleInputChange(currentRoom.roomNumber, guest.id, "day", e.target.value)
                             }
                             placeholder="Dia"
-                            className="border-gray-300 text-sm"
+                            className="border-gray-300 text-xs h-8"
                           />
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Input
                           type="text"
-                          value={guest.guestName}
+                          value={guest.firstName}
                           onChange={(e) =>
-                            handleInputChange(currentRoom.roomNumber, guest.id, "guestName", e.target.value)
+                            handleInputChange(currentRoom.roomNumber, guest.id, "firstName", e.target.value)
                           }
-                          placeholder="Nome do hóspede"
-                          className="border-gray-300 text-sm"
+                          placeholder="Nome"
+                          className="border-gray-300 text-xs h-8"
+                          required
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
+                        <Input
+                          type="text"
+                          value={guest.lastName}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "lastName", e.target.value)
+                          }
+                          placeholder="Sobrenome"
+                          className="border-gray-300 text-xs h-8"
+                          required
+                        />
+                      </td>
+                      <td className="px-3 py-3">
+                        <Input
+                          type="text"
+                          value={guest.documentNumber}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "documentNumber", e.target.value)
+                          }
+                          placeholder="CPF/RG"
+                          className="border-gray-300 text-xs h-8"
+                        />
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  handleFileUpload(currentRoom.roomNumber, guest.id, e.target.files[0]);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            <Upload size={16} className="text-blue-600 hover:text-blue-700" />
+                          </label>
+                          {guest.documentFileName && (
+                            <a
+                              href={guest.documentFile}
+                              download={guest.documentFileName}
+                              className="text-blue-600 hover:text-blue-700"
+                              title={guest.documentFileName}
+                            >
+                              <File size={16} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
                         <Input
                           type="text"
                           value={guest.reservationEngine}
@@ -474,50 +573,50 @@ export default function Home() {
                               e.target.value
                             )
                           }
-                          placeholder="Motor de reserva"
-                          className="border-gray-300 text-sm"
+                          placeholder="Motor"
+                          className="border-gray-300 text-xs h-8"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Input
                           type="text"
                           value={guest.daily}
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "daily", e.target.value)
                           }
-                          placeholder="Digite o valor"
-                          className={`border-gray-300 text-sm ${
+                          placeholder="Valor"
+                          className={`border-gray-300 text-xs h-8 ${
                             guest.daily ? "text-blue-600 font-semibold" : ""
                           }`}
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Input
                           type="text"
                           value={guest.balance}
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
                           }
-                          placeholder="Digite o valor"
-                          className={`border-gray-300 text-sm ${
+                          placeholder="Valor"
+                          className={`border-gray-300 text-xs h-8 ${
                             guest.balance ? "text-blue-600 font-semibold" : ""
                           }`}
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Input
                           type="text"
                           value={guest.payment}
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "payment", e.target.value)
                           }
-                          placeholder="Digite o valor"
-                          className={`border-gray-300 text-sm ${
+                          placeholder="Valor"
+                          className={`border-gray-300 text-xs h-8 ${
                             guest.payment ? "text-red-600 font-semibold" : ""
                           }`}
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Input
                           type="text"
                           value={guest.paymentMethod}
@@ -529,18 +628,18 @@ export default function Home() {
                               e.target.value
                             )
                           }
-                          placeholder="PIX, DN, CC, CD, AP, TB, QR, DB"
-                          className="border-gray-300 text-sm"
+                          placeholder="PIX"
+                          className="border-gray-300 text-xs h-8"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3 py-3 text-center">
                         <Button
                           onClick={() => handleDeleteRow(currentRoom.roomNumber, guest.id)}
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </Button>
                       </td>
                     </tr>
@@ -559,7 +658,7 @@ export default function Home() {
               <strong>Nota:</strong> A coluna DIÁRIA é somada ao SALDO. Se houver saldo total e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
             </p>
             <p className="text-xs text-gray-600 mt-2">
-              <strong>Dados salvos automaticamente:</strong> Todos os seus dados são salvos automaticamente no navegador. Use os botões Desfazer/Refazer para navegar pelo histórico de alterações.
+              <strong>Campos obrigatórios:</strong> Nome e Sobrenome são obrigatórios. A primeira letra é automaticamente capitalizada. Você pode fazer upload de documentos (PDF, JPG, PNG, DOC, DOCX) para cada hóspede.
             </p>
           </div>
         </div>
