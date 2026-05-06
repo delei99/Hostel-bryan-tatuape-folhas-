@@ -914,27 +914,19 @@ export default function Home() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        {(() => {
-                          const balanceValue = convertCurrencyToNumber(guest.balance);
-                          const paymentValue = convertCurrencyToNumber(guest.payment);
-                          const isCredit = paymentValue > balanceValue && guest.balance && guest.payment;
-                          
-                          return (
-                            <Input
-                              type="text"
-                              value={guest.balance}
-                              onChange={(e) =>
-                                handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
-                              }
-                              placeholder="Valor"
-                              className={`border-gray-300 text-xs h-8 ${
-                                isCredit || (guest.balance && convertCurrencyToNumber(guest.balance) > 0) ? "text-red-600 font-semibold" : ""
-                              }`}
-                              disabled={isLineBlocked}
-                              title={isCredit ? "Crédito - Passará para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
-                            />
-                          );
-                        })()}
+                        <Input
+                          type="text"
+                          value={guest.balance}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
+                          }
+                          placeholder="Valor"
+                          className={`border-gray-300 text-xs h-8 ${
+                            guest.balance && convertCurrencyToNumber(guest.balance) > 0 ? "text-red-600 font-semibold" : ""
+                          }`}
+                          disabled={isLineBlocked}
+                          title={guest.balance && convertCurrencyToNumber(guest.balance) > 0 ? "Saldo positivo - Passará para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                        />
                       </td>
                       <td className="px-3 py-3">
                         <Input
