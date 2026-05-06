@@ -920,10 +920,10 @@ export default function Home() {
                           const dailyValue = convertCurrencyToNumber(guest.daily);
                           const totalBalance = dailyValue + balanceValue;
                           
-                          const isBalanceGreaterThanPayment = totalBalance > paymentValue && totalBalance > 0;
+                          const isPaymentGreaterThanTotal = paymentValue > totalBalance && paymentValue > 0;
                           
                           let displayValue = guest.balance;
-                          if (isBalanceGreaterThanPayment && guest.balance) {
+                          if (isPaymentGreaterThanTotal && guest.balance) {
                             displayValue = guest.balance + "+";
                           }
                           
