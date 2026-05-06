@@ -179,6 +179,7 @@ export default function Home() {
   });
 
   const [selectedRoom, setSelectedRoom] = useState(1);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   // Salvar dados no localStorage sempre que rooms mudar
   useEffect(() => {
@@ -636,14 +637,30 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
-      {/* Painel Lateral Esquerdo */}
-      <div className="w-24 bg-blue-600 text-white flex flex-col items-center py-6 gap-4 shadow-lg">
+      {/* Botao para Abrir/Fechar Painel */}
+      <button
+        onClick={() => setIsPanelOpen(!isPanelOpen)}
+        className="fixed left-0 top-4 z-50 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-r-lg shadow-lg"
+        title={isPanelOpen ? "Fechar painel" : "Abrir painel de quartos"}
+      >
+        {isPanelOpen ? "<" : ">"}
+      </button>
+
+      {/* Painel Lateral Esquerdo - Recolhivel */}
+      <div
+        className={`bg-blue-600 text-white flex flex-col items-center py-6 gap-4 shadow-lg transition-all duration-300 ${
+          isPanelOpen ? "w-24" : "w-0"
+        } overflow-hidden`}
+      >
         <h2 className="text-sm font-bold text-center px-2">QUARTOS</h2>
         <div className="flex-1 flex flex-col gap-2 w-full px-2">
           {rooms.map((room) => (
             <button
               key={room.roomNumber}
-              onClick={() => setSelectedRoom(room.roomNumber)}
+              onClick={() => {
+                setSelectedRoom(room.roomNumber);
+                setIsPanelOpen(false);
+              }}
               className={`py-3 px-2 rounded-lg font-bold text-sm transition-all ${
                 selectedRoom === room.roomNumber
                   ? "bg-white text-blue-600 shadow-lg"
