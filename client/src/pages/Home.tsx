@@ -221,7 +221,9 @@ export default function Home() {
                           handleInputChange(guest.id, "payment", e.target.value)
                         }
                         placeholder="R$ 0,00"
-                        className="border-gray-300 text-sm"
+                        className={`border-gray-300 text-sm ${
+                          guest.payment ? "text-red-600 font-semibold" : ""
+                        }`}
                       />
                     </td>
                     <td className="px-4 py-3">
