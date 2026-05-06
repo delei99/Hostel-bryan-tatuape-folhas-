@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Download, RotateCcw, RotateCw, ChevronRight } from "lucide-react";
+import { Trash2, Plus, Download, RotateCcw, RotateCw } from "lucide-react";
 
 interface Guest {
   id: string;
@@ -24,52 +24,60 @@ interface RoomData {
 const STORAGE_KEY = "hostel_rooms_data";
 const NUM_ROOMS = 7;
 
-export default function Home() {
-  const [rooms, setRooms] = useState<RoomData[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState(1);
+// Normalizar dados para garantir que todos os campos estejam definidos
+const normalizeGuest = (guest: any): Guest => ({
+  id: guest.id || "",
+  day: guest.day ?? "",
+  guestName: guest.guestName ?? "",
+  reservationEngine: guest.reservationEngine ?? "",
+  daily: guest.daily ?? "",
+  balance: guest.balance ?? "",
+  payment: guest.payment ?? "",
+  paymentMethod: guest.paymentMethod ?? "",
+});
 
-  // Normalizar dados para garantir que todos os campos estejam definidos
-  const normalizeGuest = (guest: any): Guest => ({
-    id: guest.id || "",
-    day: guest.day ?? "",
-    guestName: guest.guestName ?? "",
-    reservationEngine: guest.reservationEngine ?? "",
-    daily: guest.daily ?? "",
-    balance: guest.balance ?? "",
-    payment: guest.payment ?? "",
-    paymentMethod: guest.paymentMethod ?? "",
+// Criar dados iniciais para um quarto
+const createInitialGuestsForRoom = (): Guest[] => {
+  return [
+    ...Array.from({ length: 31 }, (_, index) => ({
+      id: String(index + 1),
+      day: String(index + 1).padStart(2, "0"),
+      guestName: "",
+      reservationEngine: "",
+      daily: "",
+      balance: "",
+      payment: "",
+      paymentMethod: "",
+    })),
+    ...Array.from({ length: 5 }, (_, index) => ({
+      id: String(32 + index),
+      day: "",
+      guestName: "",
+      reservationEngine: "",
+      daily: "",
+      balance: "",
+      payment: "",
+      paymentMethod: "",
+    })),
+  ];
+};
+
+// Criar dados iniciais para todos os quartos
+const createInitialRoomsData = (): RoomData[] => {
+  return Array.from({ length: NUM_ROOMS }, (_, index) => {
+    const initialGuests = createInitialGuestsForRoom();
+    return {
+      roomNumber: index + 1,
+      guests: initialGuests,
+      history: [initialGuests],
+      historyIndex: 0,
+    };
   });
+};
 
-  // Criar dados iniciais para um quarto
-  const createInitialGuestsForRoom = (): Guest[] => {
-    return [
-      ...Array.from({ length: 31 }, (_, index) => ({
-        id: String(index + 1),
-        day: String(index + 1).padStart(2, "0"),
-        guestName: "",
-        reservationEngine: "",
-        daily: "",
-        balance: "",
-        payment: "",
-        paymentMethod: "",
-      })),
-      ...Array.from({ length: 5 }, (_, index) => ({
-        id: String(32 + index),
-        day: "",
-        guestName: "",
-        reservationEngine: "",
-        daily: "",
-        balance: "",
-        payment: "",
-        paymentMethod: "",
-      })),
-    ];
-  };
-
-  // Carregar dados do localStorage ao montar o componente
-  useEffect(() => {
+export default function Home() {
+  const [rooms, setRooms] = useState<RoomData[]>(() => {
     const savedRooms = localStorage.getItem(STORAGE_KEY);
-
     if (savedRooms) {
       try {
         const parsedRooms = JSON.parse(savedRooms).map((room: any) => ({
@@ -79,28 +87,16 @@ export default function Home() {
             guests.map(normalizeGuest)
           ),
         }));
-        setRooms(parsedRooms);
+        return parsedRooms;
       } catch (error) {
         console.error("Erro ao carregar dados do localStorage:", error);
-        createInitialRooms();
+        return createInitialRoomsData();
       }
-    } else {
-      createInitialRooms();
     }
-  }, []);
+    return createInitialRoomsData();
+  });
 
-  const createInitialRooms = () => {
-    const newRooms: RoomData[] = Array.from({ length: NUM_ROOMS }, (_, index) => {
-      const initialGuests = createInitialGuestsForRoom();
-      return {
-        roomNumber: index + 1,
-        guests: initialGuests,
-        history: [initialGuests],
-        historyIndex: 0,
-      };
-    });
-    setRooms(newRooms);
-  };
+  const [selectedRoom, setSelectedRoom] = useState(1);
 
   // Salvar dados no localStorage sempre que rooms mudar
   useEffect(() => {
@@ -304,7 +300,17 @@ export default function Home() {
     }
   };
 
-  const currentRoom = rooms.find((r) => r.roomNumber === selectedRoom);
+  const currentRoom = useMemo(() => rooms.find((r) => r.roomNumber === selectedRoom), [rooms, selectedRoom]);
+
+  if (!currentRoom) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
@@ -330,235 +336,233 @@ export default function Home() {
 
       {/* Conteúdo Principal */}
       <div className="flex-1 p-6 overflow-auto">
-        {currentRoom && (
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-600">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  HOSTEL BRYAN TATUAPÉ
-                </h1>
-                <p className="text-gray-600">Gestão de Hóspedes e Reservas - Quarto {currentRoom.roomNumber}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Mês de {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                </p>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex gap-3 mb-6 flex-wrap">
-              <Button
-                onClick={() => handleAddRow(currentRoom.roomNumber)}
-                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-              >
-                <Plus size={18} />
-                Adicionar Linha
-              </Button>
-              <Button
-                onClick={() => handleUndo(currentRoom.roomNumber)}
-                disabled={currentRoom.historyIndex <= 0}
-                variant="outline"
-                className="flex items-center gap-2 border-gray-300"
-              >
-                <RotateCcw size={18} />
-                Desfazer
-              </Button>
-              <Button
-                onClick={() => handleRedo(currentRoom.roomNumber)}
-                disabled={currentRoom.historyIndex >= currentRoom.history.length - 1}
-                variant="outline"
-                className="flex items-center gap-2 border-gray-300"
-              >
-                <RotateCw size={18} />
-                Refazer
-              </Button>
-              <Button
-                onClick={() => handleExport(currentRoom.roomNumber)}
-                variant="outline"
-                className="flex items-center gap-2 border-gray-300"
-              >
-                <Download size={18} />
-                Exportar CSV
-              </Button>
-              <Button
-                onClick={() => handleClearAll(currentRoom.roomNumber)}
-                variant="outline"
-                className="flex items-center gap-2 border-gray-300 text-orange-600 hover:text-orange-700"
-              >
-                Limpar Tudo
-              </Button>
-            </div>
-
-            {/* Table */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-blue-600 text-white">
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        DIA
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        NOME DO HÓSPEDE
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        MOTOR DE RESERVA
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        DIÁRIA
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        SALDO
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        PAGAMENTO
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-sm">
-                        FORMA DE PAGAMENTO
-                      </th>
-                      <th className="px-4 py-3 text-center font-semibold text-sm">
-                        AÇÃO
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentRoom.guests.map((guest, index) => (
-                      <tr
-                        key={guest.id}
-                        className={`border-b ${
-                          index % 2 === 0 ? "bg-white" : "bg-slate-50"
-                        } hover:bg-blue-50 transition-colors`}
-                      >
-                        <td className="px-4 py-3">
-                          {index < 31 ? (
-                            <div className="font-semibold text-gray-900 text-sm">
-                              {guest.day}
-                            </div>
-                          ) : (
-                            <Input
-                              type="text"
-                              value={guest.day}
-                              onChange={(e) =>
-                                handleInputChange(currentRoom.roomNumber, guest.id, "day", e.target.value)
-                              }
-                              placeholder="Dia"
-                              className="border-gray-300 text-sm"
-                            />
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="text"
-                            value={guest.guestName}
-                            onChange={(e) =>
-                              handleInputChange(currentRoom.roomNumber, guest.id, "guestName", e.target.value)
-                            }
-                            placeholder="Nome do hóspede"
-                            className="border-gray-300 text-sm"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="text"
-                            value={guest.reservationEngine}
-                            onChange={(e) =>
-                              handleInputChange(
-                                currentRoom.roomNumber,
-                                guest.id,
-                                "reservationEngine",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Motor de reserva"
-                            className="border-gray-300 text-sm"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="text"
-                            value={guest.daily}
-                            onChange={(e) =>
-                              handleInputChange(currentRoom.roomNumber, guest.id, "daily", e.target.value)
-                            }
-                            placeholder="Digite o valor"
-                            className={`border-gray-300 text-sm ${
-                              guest.daily ? "text-blue-600 font-semibold" : ""
-                            }`}
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="text"
-                            value={guest.balance}
-                            onChange={(e) =>
-                              handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
-                            }
-                            placeholder="Digite o valor"
-                            className={`border-gray-300 text-sm ${
-                              guest.balance ? "text-blue-600 font-semibold" : ""
-                            }`}
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="text"
-                            value={guest.payment}
-                            onChange={(e) =>
-                              handleInputChange(currentRoom.roomNumber, guest.id, "payment", e.target.value)
-                            }
-                            placeholder="Digite o valor"
-                            className={`border-gray-300 text-sm ${
-                              guest.payment ? "text-red-600 font-semibold" : ""
-                            }`}
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="text"
-                            value={guest.paymentMethod}
-                            onChange={(e) =>
-                              handleInputChange(
-                                currentRoom.roomNumber,
-                                guest.id,
-                                "paymentMethod",
-                                e.target.value
-                              )
-                            }
-                            placeholder="PIX, DN, CC, CD, AP, TB, QR, DB"
-                            className="border-gray-300 text-sm"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Button
-                            onClick={() => handleDeleteRow(currentRoom.roomNumber, guest.id)}
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Footer Info */}
-            <div className="mt-6 bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-300">
-              <p className="text-xs text-gray-600">
-                <strong>Formas de Pagamento:</strong> PIX, DN (Dinheiro), CC (Cartão de Crédito), CD (Cartão de Débito), AP (Antecipado), TB (Transferência Bancária), QR (QR Code), DB (Débito)
-              </p>
-              <p className="text-xs text-gray-600 mt-2">
-                <strong>Nota:</strong> A coluna DIÁRIA é somada ao SALDO. Se houver saldo total e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
-              </p>
-              <p className="text-xs text-gray-600 mt-2">
-                <strong>Dados salvos automaticamente:</strong> Todos os seus dados são salvos automaticamente no navegador. Use os botões Desfazer/Refazer para navegar pelo histórico de alterações.
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-600">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                HOSTEL BRYAN TATUAPÉ
+              </h1>
+              <p className="text-gray-600">Gestão de Hóspedes e Reservas - Quarto {currentRoom.roomNumber}</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Mês de {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
               </p>
             </div>
           </div>
-        )}
+
+          {/* Controls */}
+          <div className="flex gap-3 mb-6 flex-wrap">
+            <Button
+              onClick={() => handleAddRow(currentRoom.roomNumber)}
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Adicionar Linha
+            </Button>
+            <Button
+              onClick={() => handleUndo(currentRoom.roomNumber)}
+              disabled={currentRoom.historyIndex <= 0}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300"
+            >
+              <RotateCcw size={18} />
+              Desfazer
+            </Button>
+            <Button
+              onClick={() => handleRedo(currentRoom.roomNumber)}
+              disabled={currentRoom.historyIndex >= currentRoom.history.length - 1}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300"
+            >
+              <RotateCw size={18} />
+              Refazer
+            </Button>
+            <Button
+              onClick={() => handleExport(currentRoom.roomNumber)}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300"
+            >
+              <Download size={18} />
+              Exportar CSV
+            </Button>
+            <Button
+              onClick={() => handleClearAll(currentRoom.roomNumber)}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300 text-orange-600 hover:text-orange-700"
+            >
+              Limpar Tudo
+            </Button>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-blue-600 text-white">
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      DIA
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      NOME DO HÓSPEDE
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      MOTOR DE RESERVA
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      DIÁRIA
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      SALDO
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      PAGAMENTO
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm">
+                      FORMA DE PAGAMENTO
+                    </th>
+                    <th className="px-4 py-3 text-center font-semibold text-sm">
+                      AÇÃO
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentRoom.guests.map((guest, index) => (
+                    <tr
+                      key={guest.id}
+                      className={`border-b ${
+                        index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                      } hover:bg-blue-50 transition-colors`}
+                    >
+                      <td className="px-4 py-3">
+                        {index < 31 ? (
+                          <div className="font-semibold text-gray-900 text-sm">
+                            {guest.day}
+                          </div>
+                        ) : (
+                          <Input
+                            type="text"
+                            value={guest.day}
+                            onChange={(e) =>
+                              handleInputChange(currentRoom.roomNumber, guest.id, "day", e.target.value)
+                            }
+                            placeholder="Dia"
+                            className="border-gray-300 text-sm"
+                          />
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          type="text"
+                          value={guest.guestName}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "guestName", e.target.value)
+                          }
+                          placeholder="Nome do hóspede"
+                          className="border-gray-300 text-sm"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          type="text"
+                          value={guest.reservationEngine}
+                          onChange={(e) =>
+                            handleInputChange(
+                              currentRoom.roomNumber,
+                              guest.id,
+                              "reservationEngine",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Motor de reserva"
+                          className="border-gray-300 text-sm"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          type="text"
+                          value={guest.daily}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "daily", e.target.value)
+                          }
+                          placeholder="Digite o valor"
+                          className={`border-gray-300 text-sm ${
+                            guest.daily ? "text-blue-600 font-semibold" : ""
+                          }`}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          type="text"
+                          value={guest.balance}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "balance", e.target.value)
+                          }
+                          placeholder="Digite o valor"
+                          className={`border-gray-300 text-sm ${
+                            guest.balance ? "text-blue-600 font-semibold" : ""
+                          }`}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          type="text"
+                          value={guest.payment}
+                          onChange={(e) =>
+                            handleInputChange(currentRoom.roomNumber, guest.id, "payment", e.target.value)
+                          }
+                          placeholder="Digite o valor"
+                          className={`border-gray-300 text-sm ${
+                            guest.payment ? "text-red-600 font-semibold" : ""
+                          }`}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          type="text"
+                          value={guest.paymentMethod}
+                          onChange={(e) =>
+                            handleInputChange(
+                              currentRoom.roomNumber,
+                              guest.id,
+                              "paymentMethod",
+                              e.target.value
+                            )
+                          }
+                          placeholder="PIX, DN, CC, CD, AP, TB, QR, DB"
+                          className="border-gray-300 text-sm"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Button
+                          onClick={() => handleDeleteRow(currentRoom.roomNumber, guest.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Footer Info */}
+          <div className="mt-6 bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-300">
+            <p className="text-xs text-gray-600">
+              <strong>Formas de Pagamento:</strong> PIX, DN (Dinheiro), CC (Cartão de Crédito), CD (Cartão de Débito), AP (Antecipado), TB (Transferência Bancária), QR (QR Code), DB (Débito)
+            </p>
+            <p className="text-xs text-gray-600 mt-2">
+              <strong>Nota:</strong> A coluna DIÁRIA é somada ao SALDO. Se houver saldo total e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
+            </p>
+            <p className="text-xs text-gray-600 mt-2">
+              <strong>Dados salvos automaticamente:</strong> Todos os seus dados são salvos automaticamente no navegador. Use os botões Desfazer/Refazer para navegar pelo histórico de alterações.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
