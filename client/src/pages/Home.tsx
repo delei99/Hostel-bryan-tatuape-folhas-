@@ -922,7 +922,8 @@ export default function Home() {
                       <td className="px-3 py-3">
                         {(() => {
                           const balanceValue = convertCurrencyToNumber(guest.balance);
-                          const isPositiveBalance = balanceValue > 0 && guest.balance;
+                          const paymentValue = convertCurrencyToNumber(guest.payment);
+                          const isCredit = paymentValue > balanceValue && guest.balance && guest.payment;
                           
                           return (
                             <Input
@@ -933,10 +934,10 @@ export default function Home() {
                               }
                               placeholder="Valor"
                               className={`border-gray-300 text-xs h-8 ${
-                                isPositiveBalance ? "text-red-600 font-semibold" : guest.balance ? "text-blue-600 font-semibold" : ""
+                                isCredit ? "text-red-600 font-semibold" : guest.balance ? "text-blue-600 font-semibold" : ""
                               }`}
                               disabled={isLineBlocked}
-                              title={isPositiveBalance ? "Saldo positivo - Passará para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                              title={isCredit ? "Crédito - Passará para o dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                             />
                           );
                         })()}
