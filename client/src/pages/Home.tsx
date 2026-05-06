@@ -742,19 +742,21 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentRoom.guests.map((guest, index) => (
+                  {currentRoom.guests.map((guest, index) => {
+                    const isLineBlocked = index < 31 && isAfterMidnight();
+                    return (
                     <tr
                       key={guest.id}
                       className={`border-b ${
-                        index % 2 === 0 ? "bg-white" : "bg-slate-50"
-                      } hover:bg-blue-50 transition-colors`}
+                        isLineBlocked ? "bg-gray-100 opacity-60" : index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                      } ${isLineBlocked ? "hover:bg-gray-100" : "hover:bg-blue-50"} transition-colors`}
                     >
                       <td className="px-3 py-3">
                         {index < 31 ? (
                           <div className={`font-semibold ${
-                            isAfterMidnight() ? "text-gray-500 bg-gray-100 px-2 py-1 rounded" : "text-gray-900"
+                            isLineBlocked ? "text-gray-500" : "text-gray-900"
                           }`}
-                          title={isAfterMidnight() ? "Edição bloqueada após 00:00" : ""}>
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}>
                             {guest.day}
                           </div>
                         ) : (
@@ -766,8 +768,8 @@ export default function Home() {
                             }
                             placeholder="Dia"
                             className="border-gray-300 text-xs h-8"
-                            disabled={isAfterMidnight()}
-                            title={isAfterMidnight() ? "Edição bloqueada após 00:00" : ""}
+                            disabled={isLineBlocked}
+                            title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                           />
                         )}
                       </td>
@@ -781,6 +783,8 @@ export default function Home() {
                           placeholder="Nome"
                           className="border-gray-300 text-xs h-8"
                           required
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -793,6 +797,8 @@ export default function Home() {
                           placeholder="Sobrenome"
                           className="border-gray-300 text-xs h-8"
                           required
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -807,6 +813,8 @@ export default function Home() {
                             className={`border-gray-300 text-xs h-8 ${
                               guest.documentNumber && guest.cpfValid ? "border-green-500" : guest.documentNumber ? "border-red-500" : ""
                             }`}
+                            disabled={isLineBlocked}
+                            title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                           />
                           {guest.documentNumber && (
                             <span className={`text-xs font-bold ${guest.cpfValid ? "text-green-600" : "text-red-600"}`}>
@@ -817,7 +825,7 @@ export default function Home() {
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1">
-                          <label className="cursor-pointer">
+                          <label className={`cursor-pointer ${isLineBlocked ? "opacity-50 cursor-not-allowed" : ""}`}>
                             <input
                               type="file"
                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
@@ -827,8 +835,9 @@ export default function Home() {
                                 }
                               }}
                               className="hidden"
+                              disabled={isLineBlocked}
                             />
-                            <Upload size={14} className="text-blue-600 hover:text-blue-700" />
+                            <Upload size={14} className={`${isLineBlocked ? "text-gray-400" : "text-blue-600 hover:text-blue-700"}`} />
                           </label>
                           {guest.documentFileName && (
                             <a
@@ -844,7 +853,7 @@ export default function Home() {
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1">
-                          <label className="cursor-pointer">
+                          <label className={`cursor-pointer ${isLineBlocked ? "opacity-50 cursor-not-allowed" : ""}`}>
                             <input
                               type="file"
                               accept=".jpg,.jpeg,.png"
@@ -854,8 +863,9 @@ export default function Home() {
                                 }
                               }}
                               className="hidden"
+                              disabled={isLineBlocked}
                             />
-                            <Upload size={14} className="text-green-600 hover:text-green-700" />
+                            <Upload size={14} className={`${isLineBlocked ? "text-gray-400" : "text-green-600 hover:text-green-700"}`} />
                           </label>
                           {guest.photoFileName && (
                             <a
@@ -883,6 +893,8 @@ export default function Home() {
                           }
                           placeholder="Motor"
                           className="border-gray-300 text-xs h-8"
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -896,6 +908,8 @@ export default function Home() {
                           className={`border-gray-300 text-xs h-8 ${
                             guest.daily ? "text-blue-600 font-semibold" : ""
                           }`}
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -909,6 +923,8 @@ export default function Home() {
                           className={`border-gray-300 text-xs h-8 ${
                             guest.balance ? "text-blue-600 font-semibold" : ""
                           }`}
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -922,6 +938,8 @@ export default function Home() {
                           className={`border-gray-300 text-xs h-8 ${
                             guest.payment ? "text-red-600 font-semibold" : ""
                           }`}
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -938,6 +956,8 @@ export default function Home() {
                           }
                           placeholder="PIX"
                           className="border-gray-300 text-xs h-8"
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
                       <td className="px-3 py-3 text-center">
@@ -947,6 +967,7 @@ export default function Home() {
                           size="sm"
                           className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 h-8 w-8 p-0"
                           title="Gerar Recibo"
+                          disabled={isLineBlocked}
                         >
                           <Printer size={14} />
                         </Button>
@@ -957,12 +978,14 @@ export default function Home() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          disabled={isLineBlocked}
                         >
                           <Trash2 size={14} />
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -971,6 +994,9 @@ export default function Home() {
           {/* Footer Info */}
           <div className="mt-6 bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-300">
             <p className="text-xs text-gray-600">
+              <strong>Bloqueio de Edição:</strong> Após as 00:00 (meia-noite), toda a linha dos dias 01-31 fica bloqueada para edição, protegendo os dados do dia anterior.
+            </p>
+            <p className="text-xs text-gray-600 mt-2">
               <strong>Validação de CPF:</strong> O CPF é validado automaticamente. Um ✓ verde indica CPF válido, ✗ vermelho indica inválido.
             </p>
             <p className="text-xs text-gray-600 mt-2">
