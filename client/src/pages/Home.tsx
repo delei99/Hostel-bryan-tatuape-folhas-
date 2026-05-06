@@ -5,7 +5,7 @@ import { Trash2, Plus, Download } from "lucide-react";
 
 interface Guest {
   id: string;
-  roomNumber: string;
+  day: string;
   guestName: string;
   reservationEngine: string;
   balance: string;
@@ -14,98 +14,17 @@ interface Guest {
 }
 
 export default function Home() {
-  const [guests, setGuests] = useState<Guest[]>([
-    {
-      id: "1",
-      roomNumber: "01",
+  const [guests, setGuests] = useState<Guest[]>(
+    Array.from({ length: 31 }, (_, index) => ({
+      id: String(index + 1),
+      day: String(index + 1).padStart(2, "0"),
       guestName: "",
       reservationEngine: "",
       balance: "",
       payment: "",
       paymentMethod: "",
-    },
-    {
-      id: "2",
-      roomNumber: "02",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "3",
-      roomNumber: "03",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "4",
-      roomNumber: "04",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "5",
-      roomNumber: "05",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "6",
-      roomNumber: "06",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "7",
-      roomNumber: "07",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "8",
-      roomNumber: "08",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "9",
-      roomNumber: "09",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-    {
-      id: "10",
-      roomNumber: "10",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    },
-  ]);
+    }))
+  );
 
   const handleInputChange = (id: string, field: keyof Guest, value: string) => {
     setGuests(
@@ -117,12 +36,12 @@ export default function Home() {
 
   const handleAddRow = () => {
     const newId = String(Math.max(...guests.map((g) => parseInt(g.id)), 0) + 1);
-    const newRoomNumber = String(guests.length + 1).padStart(2, "0");
+    const newDay = String(guests.length + 1).padStart(2, "0");
     setGuests([
       ...guests,
       {
         id: newId,
-        roomNumber: newRoomNumber,
+        day: newDay,
         guestName: "",
         reservationEngine: "",
         balance: "",
@@ -138,9 +57,9 @@ export default function Home() {
 
   const handleExport = () => {
     const csv = [
-      ["Nº QUARTO", "NOME DO HÓSPEDE", "MOTOR DE RESERVA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
+      ["DIA", "NOME DO HÓSPEDE", "MOTOR DE RESERVA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
       ...guests.map((g) => [
-        g.roomNumber,
+        g.day,
         g.guestName,
         g.reservationEngine,
         g.balance,
@@ -171,7 +90,7 @@ export default function Home() {
             </h1>
             <p className="text-gray-600">Gestão de Hóspedes e Reservas</p>
             <p className="text-sm text-gray-500 mt-2">
-              Data: {new Date().toLocaleDateString("pt-BR")}
+              Mês de {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
             </p>
           </div>
         </div>
@@ -202,7 +121,7 @@ export default function Home() {
               <thead>
                 <tr className="bg-blue-600 text-white">
                   <th className="px-4 py-3 text-left font-semibold text-sm">
-                    Nº QUARTO
+                    DIA
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-sm">
                     NOME DO HÓSPEDE
@@ -234,7 +153,7 @@ export default function Home() {
                   >
                     <td className="px-4 py-3">
                       <div className="font-semibold text-gray-900 text-sm">
-                        {guest.roomNumber}
+                        {guest.day}
                       </div>
                     </td>
                     <td className="px-4 py-3">
