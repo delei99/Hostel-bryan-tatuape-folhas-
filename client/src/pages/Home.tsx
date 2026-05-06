@@ -15,8 +15,9 @@ interface Guest {
   photoFileName: string;
   reservationEngine: string;
   daily: string;
-  balance: string;
+  launch: string;
   payment: string;
+  finalBalance: string;
   paymentMethod: string;
   cpfValid: boolean;
 }
@@ -98,8 +99,9 @@ const normalizeGuest = (guest: any): Guest => ({
   photoFileName: guest.photoFileName ?? "",
   reservationEngine: guest.reservationEngine ?? "",
   daily: guest.daily ?? "",
-  balance: guest.balance ?? "",
+  launch: guest.launch ?? "",
   payment: guest.payment ?? "",
+  finalBalance: guest.finalBalance ?? "",
   paymentMethod: guest.paymentMethod ?? "",
   cpfValid: guest.cpfValid ?? false,
 });
@@ -119,8 +121,9 @@ const createInitialGuestsForRoom = (): Guest[] => {
       photoFileName: "",
       reservationEngine: "",
       daily: "",
-      balance: "",
+      launch: "",
       payment: "",
+      finalBalance: "",
       paymentMethod: "",
       cpfValid: false,
     })),
@@ -136,8 +139,9 @@ const createInitialGuestsForRoom = (): Guest[] => {
       photoFileName: "",
       reservationEngine: "",
       daily: "",
-      balance: "",
+      launch: "",
       payment: "",
+      finalBalance: "",
       paymentMethod: "",
       cpfValid: false,
     })),
@@ -247,7 +251,7 @@ export default function Home() {
       }
     }
     
-    if ((field === "daily" || field === "balance" || field === "payment") && value) {
+    if ((field === "daily" || field === "launch" || field === "payment") && value) {
       finalValue = formatCurrency(value);
     }
     
@@ -262,32 +266,31 @@ export default function Home() {
     );
     
     // Lógica de carregamento de saldo entre dias
-    if (field === "daily" || field === "balance" || field === "payment") {
+    if (field === "daily" || field === "launch" || field === "payment") {
       const currentGuestIndex = updatedGuests.findIndex((g) => g.id === id);
       
-      if (currentGuestIndex !== -1 && currentGuestIndex < updatedGuests.length - 1) {
+      if (currentGuestIndex !== -1) {
         const currentGuest = updatedGuests[currentGuestIndex];
-        const nextGuest = updatedGuests[currentGuestIndex + 1];
         
         const dailyValue = convertCurrencyToNumber(currentGuest.daily);
-        const previousBalance = convertCurrencyToNumber(currentGuest.balance);
-        // Se previousBalance é positivo (crédito), SUBTRAI da dívida. Se negativo (dívida), SOMA.
-        const totalDebt = dailyValue - previousBalance; // DIÁRIA - CRÉDITO = DÍVIDA DO DIA
+        const previousLaunch = convertCurrencyToNumber(currentGuest.launch);
+        // Se previousLaunch é positivo (crédito), SUBTRAI da dívida. Se negativo (dívida), SOMA.
+        const totalDebt = dailyValue - previousLaunch; // DIÁRIA - CRÉDITO = DÍVIDA DO DIA
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        // Calcula o que resta para o dia seguinte: TOTAL - PAGAMENTO
-        const remainingForNextDay = totalDebt - currentPayment;
+        // Calcula o saldo final: TOTAL - PAGAMENTO
+        const finalBalance = totalDebt - currentPayment;
         
-        if (remainingForNextDay !== 0) {
-          updatedGuests[currentGuestIndex + 1] = {
-            ...nextGuest,
-            balance: formatCurrency(String(Math.round(remainingForNextDay * 100))),
+        if (finalBalance !== 0) {
+          updatedGuests[currentGuestIndex] = {
+            ...currentGuest,
+            finalBalance: formatCurrency(String(Math.round(finalBalance * 100))),
           };
         } else {
-          updatedGuests[currentGuestIndex + 1] = {
-            ...nextGuest,
-            balance: "",
+          updatedGuests[currentGuestIndex] = {
+            ...currentGuest,
+            finalBalance: "",
           };
         }
       }
@@ -470,7 +473,7 @@ export default function Home() {
             </div>
             <div class="row">
               <span class="label">Saldo:</span>
-              <span class="value">${guest.balance || '-'}</span>
+              <span class="value">${guest.finalBalance || '-'}</span>
             </div>
           </div>
 
@@ -527,8 +530,9 @@ export default function Home() {
         photoFileName: "",
         reservationEngine: "",
         daily: "",
-        balance: "",
+        launch: "",
         payment: "",
+        finalBalance: "",
         paymentMethod: "",
         cpfValid: false,
       },
@@ -578,8 +582,9 @@ export default function Home() {
         g.documentNumber,
         g.reservationEngine,
         g.daily,
-        g.balance,
+        g.launch,
         g.payment,
+        g.finalBalance,
         g.paymentMethod,
       ]),
     ]
@@ -611,8 +616,9 @@ export default function Home() {
         photoFileName: "",
         reservationEngine: "",
         daily: "",
-        balance: "",
+        launch: "",
         payment: "",
+        finalBalance: "",
         paymentMethod: "",
         cpfValid: false,
       }));
@@ -747,8 +753,9 @@ export default function Home() {
                     <th className="px-3 py-3 text-left font-semibold text-xs">FOTO</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">MOTOR</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">DIÁRIA</th>
-                    <th className="px-3 py-3 text-left font-semibold text-xs">SALDO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">LANÇAMENTO</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">PAGAMENTO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">SALDO FINAL</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">FORMA PAG.</th>
                     <th className="px-3 py-3 text-center font-semibold text-xs">RECIBO</th>
                     <th className="px-3 py-3 text-center font-semibold text-xs">AÇÃO</th>
@@ -929,18 +936,18 @@ export default function Home() {
                       </td>
                       <td className="px-3 py-3">
                         {(() => {
-                          const balanceValue = convertCurrencyToNumber(guest.balance);
+                          const launchValue = convertCurrencyToNumber(guest.launch);
                           const paymentValue = convertCurrencyToNumber(guest.payment);
                           const dailyValue = convertCurrencyToNumber(guest.daily);
-                          const totalDebt = dailyValue + balanceValue; // DIÁRIA + SALDO = TOTAL DO DIA
+                          const totalDebt = dailyValue - launchValue; // DIÁRIA - CRÉDITO = DÍVIDA DO DIA
                           
-                          // Calcula o saldo que passará para o dia seguinte
+                          // Calcula o saldo final
                           const nextDayBalance = totalDebt - paymentValue;
                           const isPositiveNextDay = nextDayBalance > 0;
                           
-                          let displayValue = guest.balance;
-                          if (isPositiveNextDay && guest.balance) {
-                            displayValue = guest.balance + "+";
+                          let displayValue = guest.launch;
+                          if (isPositiveNextDay && guest.launch) {
+                            displayValue = guest.launch + "+";
                           }
                           
                           return (
@@ -950,7 +957,7 @@ export default function Home() {
                               onChange={(e) => {
                                 let value = e.target.value;
                                 value = value.replace(/\+/g, "");
-                                handleInputChange(currentRoom.roomNumber, guest.id, "balance", value);
+                                handleInputChange(currentRoom.roomNumber, guest.id, "launch", value);
                               }}
                               placeholder="Valor"
                               className="border-gray-300 text-xs h-8 text-blue-600 font-semibold"
@@ -973,6 +980,16 @@ export default function Home() {
                           }`}
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                        />
+                      </td>
+                      <td className="px-3 py-3">
+                        <Input
+                          type="text"
+                          value={guest.finalBalance}
+                          readOnly
+                          placeholder="-"
+                          className={`border-gray-300 text-xs h-8 text-blue-600 font-semibold bg-gray-50`}
+                          title="Saldo Final (calculado automaticamente)"
                         />
                       </td>
                       <td className="px-3 py-3">
