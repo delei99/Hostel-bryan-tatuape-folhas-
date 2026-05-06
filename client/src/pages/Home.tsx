@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File } from "lucide-react";
+import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File, Printer } from "lucide-react";
 
 interface Guest {
   id: string;
@@ -11,11 +11,14 @@ interface Guest {
   documentNumber: string;
   documentFile: string;
   documentFileName: string;
+  photoFile: string;
+  photoFileName: string;
   reservationEngine: string;
   daily: string;
   balance: string;
   payment: string;
   paymentMethod: string;
+  cpfValid: boolean;
 }
 
 interface RoomData {
@@ -34,6 +37,43 @@ const capitalizeFirstLetter = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+// Validar CPF
+const validateCPF = (cpf: string): boolean => {
+  const cleanCPF = cpf.replace(/\D/g, "");
+  
+  if (cleanCPF.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+  
+  let sum = 0;
+  let remainder;
+  
+  for (let i = 1; i <= 9; i++) {
+    sum += parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+  }
+  
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.substring(9, 10))) return false;
+  
+  sum = 0;
+  for (let i = 1; i <= 10; i++) {
+    sum += parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+  }
+  
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.substring(10, 11))) return false;
+  
+  return true;
+};
+
+// Formatar CPF
+const formatCPF = (cpf: string): string => {
+  const cleanCPF = cpf.replace(/\D/g, "");
+  if (cleanCPF.length !== 11) return cpf;
+  return `${cleanCPF.substring(0, 3)}.${cleanCPF.substring(3, 6)}.${cleanCPF.substring(6, 9)}-${cleanCPF.substring(9)}`;
+};
+
 // Normalizar dados para garantir que todos os campos estejam definidos
 const normalizeGuest = (guest: any): Guest => ({
   id: guest.id || "",
@@ -43,11 +83,14 @@ const normalizeGuest = (guest: any): Guest => ({
   documentNumber: guest.documentNumber ?? "",
   documentFile: guest.documentFile ?? "",
   documentFileName: guest.documentFileName ?? "",
+  photoFile: guest.photoFile ?? "",
+  photoFileName: guest.photoFileName ?? "",
   reservationEngine: guest.reservationEngine ?? "",
   daily: guest.daily ?? "",
   balance: guest.balance ?? "",
   payment: guest.payment ?? "",
   paymentMethod: guest.paymentMethod ?? "",
+  cpfValid: guest.cpfValid ?? false,
 });
 
 // Criar dados iniciais para um quarto
@@ -61,11 +104,14 @@ const createInitialGuestsForRoom = (): Guest[] => {
       documentNumber: "",
       documentFile: "",
       documentFileName: "",
+      photoFile: "",
+      photoFileName: "",
       reservationEngine: "",
       daily: "",
       balance: "",
       payment: "",
       paymentMethod: "",
+      cpfValid: false,
     })),
     ...Array.from({ length: 5 }, (_, index) => ({
       id: String(32 + index),
@@ -75,11 +121,14 @@ const createInitialGuestsForRoom = (): Guest[] => {
       documentNumber: "",
       documentFile: "",
       documentFileName: "",
+      photoFile: "",
+      photoFileName: "",
       reservationEngine: "",
       daily: "",
       balance: "",
       payment: "",
       paymentMethod: "",
+      cpfValid: false,
     })),
   ];
 };
@@ -168,10 +217,22 @@ export default function Home() {
     if (!room) return;
 
     let finalValue = value;
+    let cpfValid = false;
     
     // Capitalizar primeira letra para nome e sobrenome
     if ((field === "firstName" || field === "lastName") && value) {
       finalValue = capitalizeFirstLetter(value);
+    }
+    
+    // Validar e formatar CPF
+    if (field === "documentNumber" && value) {
+      const cleanCPF = value.replace(/\D/g, "");
+      if (cleanCPF.length === 11) {
+        cpfValid = validateCPF(cleanCPF);
+        finalValue = formatCPF(cleanCPF);
+      } else {
+        finalValue = value;
+      }
     }
     
     if ((field === "daily" || field === "balance" || field === "payment") && value) {
@@ -179,7 +240,13 @@ export default function Home() {
     }
     
     const updatedGuests = room.guests.map((guest) =>
-      guest.id === id ? { ...guest, [field]: finalValue } : guest
+      guest.id === id 
+        ? { 
+            ...guest, 
+            [field]: finalValue,
+            ...(field === "documentNumber" && { cpfValid })
+          } 
+        : guest
     );
     
     // Lógica de carregamento de saldo entre dias
@@ -228,7 +295,7 @@ export default function Home() {
     updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
   };
 
-  const handleFileUpload = (roomNumber: number, id: string, file: File) => {
+  const handleFileUpload = (roomNumber: number, id: string, file: File, fileType: "document" | "photo") => {
     const room = rooms.find((r) => r.roomNumber === roomNumber);
     if (!room) return;
 
@@ -237,11 +304,17 @@ export default function Home() {
       const fileContent = e.target?.result as string;
       const updatedGuests = room.guests.map((guest) =>
         guest.id === id
-          ? {
-              ...guest,
-              documentFile: fileContent,
-              documentFileName: file.name,
-            }
+          ? fileType === "document"
+            ? {
+                ...guest,
+                documentFile: fileContent,
+                documentFileName: file.name,
+              }
+            : {
+                ...guest,
+                photoFile: fileContent,
+                photoFileName: file.name,
+              }
           : guest
       );
 
@@ -250,6 +323,186 @@ export default function Home() {
       updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
     };
     reader.readAsDataURL(file);
+  };
+
+  const generateReceipt = (roomNumber: number, guest: Guest) => {
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Recibo - ${guest.firstName} ${guest.lastName}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+          }
+          .receipt {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+          .header h1 {
+            margin: 0;
+            color: #0066cc;
+            font-size: 24px;
+          }
+          .header p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+          }
+          .section {
+            margin-bottom: 20px;
+          }
+          .section-title {
+            font-weight: bold;
+            color: #0066cc;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+          }
+          .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+          }
+          .label {
+            font-weight: 500;
+            color: #333;
+          }
+          .value {
+            text-align: right;
+            color: #666;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 2px solid #0066cc;
+            border-bottom: 2px solid #0066cc;
+            margin-top: 10px;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #999;
+            font-size: 12px;
+          }
+          .photo {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .photo img {
+            max-width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            border: 2px solid #0066cc;
+          }
+          @media print {
+            body {
+              background: white;
+            }
+            .receipt {
+              box-shadow: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <div class="header">
+            <h1>HOSTEL BRYAN TATUAPÉ</h1>
+            <p>Recibo de Hospedagem</p>
+            <p>Quarto ${roomNumber}</p>
+          </div>
+
+          ${guest.photoFile ? `
+            <div class="photo">
+              <img src="${guest.photoFile}" alt="Foto do hóspede">
+            </div>
+          ` : ''}
+
+          <div class="section">
+            <div class="section-title">Dados do Hóspede</div>
+            <div class="row">
+              <span class="label">Nome:</span>
+              <span class="value">${guest.firstName} ${guest.lastName}</span>
+            </div>
+            <div class="row">
+              <span class="label">CPF:</span>
+              <span class="value">${guest.documentNumber}</span>
+            </div>
+            <div class="row">
+              <span class="label">Data:</span>
+              <span class="value">${guest.day}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Informações de Hospedagem</div>
+            <div class="row">
+              <span class="label">Motor de Reserva:</span>
+              <span class="value">${guest.reservationEngine || '-'}</span>
+            </div>
+            <div class="row">
+              <span class="label">Diária:</span>
+              <span class="value">${guest.daily || '-'}</span>
+            </div>
+            <div class="row">
+              <span class="label">Saldo:</span>
+              <span class="value">${guest.balance || '-'}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Pagamento</div>
+            <div class="row">
+              <span class="label">Valor Pago:</span>
+              <span class="value">${guest.payment || '-'}</span>
+            </div>
+            <div class="row">
+              <span class="label">Forma de Pagamento:</span>
+              <span class="value">${guest.paymentMethod || '-'}</span>
+            </div>
+          </div>
+
+          <div class="total-row">
+            <span>TOTAL:</span>
+            <span>${guest.payment || 'R$ 0,00'}</span>
+          </div>
+
+          <div class="footer">
+            <p>Recibo gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+            <p>Obrigado pela sua hospedagem!</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   const handleAddRow = (roomNumber: number) => {
@@ -267,11 +520,14 @@ export default function Home() {
         documentNumber: "",
         documentFile: "",
         documentFileName: "",
+        photoFile: "",
+        photoFileName: "",
         reservationEngine: "",
         daily: "",
         balance: "",
         payment: "",
         paymentMethod: "",
+        cpfValid: false,
       },
     ];
 
@@ -311,7 +567,7 @@ export default function Home() {
     if (!room) return;
 
     const csv = [
-      ["DIA", "NOME", "SOBRENOME", "DOCUMENTO", "MOTOR DE RESERVA", "DIÁRIA", "SALDO", "PAGAMENTO", "FORMA DE PAGAMENTO"],
+      ["DIA", "NOME", "SOBRENOME", "CPF", "MOTOR RESERVA", "DIÁRIA", "SALDO", "PAGAMENTO", "FORMA PAGAMENTO"],
       ...room.guests.map((g) => [
         g.day,
         g.firstName,
@@ -348,11 +604,14 @@ export default function Home() {
         documentNumber: "",
         documentFile: "",
         documentFileName: "",
+        photoFile: "",
+        photoFileName: "",
         reservationEngine: "",
         daily: "",
         balance: "",
         payment: "",
         paymentMethod: "",
+        cpfValid: false,
       }));
 
       const newHistory = room.history.slice(0, room.historyIndex + 1);
@@ -464,13 +723,15 @@ export default function Home() {
                     <th className="px-3 py-3 text-left font-semibold text-xs">DIA</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">NOME</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">SOBRENOME</th>
-                    <th className="px-3 py-3 text-left font-semibold text-xs">DOCUMENTO</th>
-                    <th className="px-3 py-3 text-left font-semibold text-xs">ARQUIVO</th>
-                    <th className="px-3 py-3 text-left font-semibold text-xs">MOTOR RESERVA</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">CPF</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">DOC</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">FOTO</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">MOTOR</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">DIÁRIA</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">SALDO</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">PAGAMENTO</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">FORMA PAG.</th>
+                    <th className="px-3 py-3 text-center font-semibold text-xs">RECIBO</th>
                     <th className="px-3 py-3 text-center font-semibold text-xs">AÇÃO</th>
                   </tr>
                 </thead>
@@ -524,15 +785,24 @@ export default function Home() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <Input
-                          type="text"
-                          value={guest.documentNumber}
-                          onChange={(e) =>
-                            handleInputChange(currentRoom.roomNumber, guest.id, "documentNumber", e.target.value)
-                          }
-                          placeholder="CPF/RG"
-                          className="border-gray-300 text-xs h-8"
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="text"
+                            value={guest.documentNumber}
+                            onChange={(e) =>
+                              handleInputChange(currentRoom.roomNumber, guest.id, "documentNumber", e.target.value)
+                            }
+                            placeholder="CPF"
+                            className={`border-gray-300 text-xs h-8 ${
+                              guest.documentNumber && guest.cpfValid ? "border-green-500" : guest.documentNumber ? "border-red-500" : ""
+                            }`}
+                          />
+                          {guest.documentNumber && (
+                            <span className={`text-xs font-bold ${guest.cpfValid ? "text-green-600" : "text-red-600"}`}>
+                              {guest.cpfValid ? "✓" : "✗"}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1">
@@ -542,12 +812,12 @@ export default function Home() {
                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                               onChange={(e) => {
                                 if (e.target.files?.[0]) {
-                                  handleFileUpload(currentRoom.roomNumber, guest.id, e.target.files[0]);
+                                  handleFileUpload(currentRoom.roomNumber, guest.id, e.target.files[0], "document");
                                 }
                               }}
                               className="hidden"
                             />
-                            <Upload size={16} className="text-blue-600 hover:text-blue-700" />
+                            <Upload size={14} className="text-blue-600 hover:text-blue-700" />
                           </label>
                           {guest.documentFileName && (
                             <a
@@ -556,7 +826,34 @@ export default function Home() {
                               className="text-blue-600 hover:text-blue-700"
                               title={guest.documentFileName}
                             >
-                              <File size={16} />
+                              <File size={14} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,.png"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  handleFileUpload(currentRoom.roomNumber, guest.id, e.target.files[0], "photo");
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            <Upload size={14} className="text-green-600 hover:text-green-700" />
+                          </label>
+                          {guest.photoFileName && (
+                            <a
+                              href={guest.photoFile}
+                              download={guest.photoFileName}
+                              className="text-green-600 hover:text-green-700"
+                              title={guest.photoFileName}
+                            >
+                              <File size={14} />
                             </a>
                           )}
                         </div>
@@ -634,6 +931,17 @@ export default function Home() {
                       </td>
                       <td className="px-3 py-3 text-center">
                         <Button
+                          onClick={() => generateReceipt(currentRoom.roomNumber, guest)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 h-8 w-8 p-0"
+                          title="Gerar Recibo"
+                        >
+                          <Printer size={14} />
+                        </Button>
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <Button
                           onClick={() => handleDeleteRow(currentRoom.roomNumber, guest.id)}
                           variant="ghost"
                           size="sm"
@@ -652,13 +960,16 @@ export default function Home() {
           {/* Footer Info */}
           <div className="mt-6 bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-300">
             <p className="text-xs text-gray-600">
-              <strong>Formas de Pagamento:</strong> PIX, DN (Dinheiro), CC (Cartão de Crédito), CD (Cartão de Débito), AP (Antecipado), TB (Transferência Bancária), QR (QR Code), DB (Débito)
+              <strong>Validação de CPF:</strong> O CPF é validado automaticamente. Um ✓ verde indica CPF válido, ✗ vermelho indica inválido.
             </p>
             <p className="text-xs text-gray-600 mt-2">
-              <strong>Nota:</strong> A coluna DIÁRIA é somada ao SALDO. Se houver saldo total e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
+              <strong>Upload de Arquivos:</strong> Você pode fazer upload de documentos (PDF, JPG, PNG, DOC, DOCX) e fotos (JPG, PNG) para cada hóspede.
             </p>
             <p className="text-xs text-gray-600 mt-2">
-              <strong>Campos obrigatórios:</strong> Nome e Sobrenome são obrigatórios. A primeira letra é automaticamente capitalizada. Você pode fazer upload de documentos (PDF, JPG, PNG, DOC, DOCX) para cada hóspede.
+              <strong>Recibos:</strong> Clique no ícone de impressora para gerar um recibo personalizado com os dados do hóspede. O recibo inclui foto, dados pessoais e informações de hospedagem.
+            </p>
+            <p className="text-xs text-gray-600 mt-2">
+              <strong>Nota:</strong> A coluna DIÁRIA é somada ao SALDO. Se houver saldo total e sem pagamento, o saldo passa automaticamente para o dia seguinte.
             </p>
           </div>
         </div>
