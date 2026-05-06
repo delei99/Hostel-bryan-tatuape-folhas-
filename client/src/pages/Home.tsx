@@ -270,21 +270,17 @@ export default function Home() {
         
         const dailyValue = convertCurrencyToNumber(currentGuest.daily);
         const previousBalance = convertCurrencyToNumber(currentGuest.balance);
-        const totalBalance = dailyValue + previousBalance;
+        const totalDebt = dailyValue + previousBalance; // DIÁRIA + SALDO = TOTAL DO DIA (dívida)
         
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        if (currentPayment > totalBalance && currentPayment > 0) {
-          const credit = currentPayment - totalBalance;
+        // Calcula o que resta para o dia seguinte: TOTAL - PAGAMENTO
+        const remainingForNextDay = totalDebt - currentPayment;
+        
+        if (remainingForNextDay !== 0) {
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
-            balance: formatCurrency(String(Math.round(credit * 100))),
-          };
-        } else if (totalBalance > currentPayment && totalBalance > 0) {
-          const remainingBalance = totalBalance - currentPayment;
-          updatedGuests[currentGuestIndex + 1] = {
-            ...nextGuest,
-            balance: formatCurrency(String(Math.round(remainingBalance * 100))),
+            balance: formatCurrency(String(Math.round(remainingForNextDay * 100))),
           };
         } else {
           updatedGuests[currentGuestIndex + 1] = {
@@ -918,12 +914,14 @@ export default function Home() {
                           const balanceValue = convertCurrencyToNumber(guest.balance);
                           const paymentValue = convertCurrencyToNumber(guest.payment);
                           const dailyValue = convertCurrencyToNumber(guest.daily);
-                          const totalBalance = dailyValue + balanceValue;
+                          const totalDebt = dailyValue + balanceValue; // DIÁRIA + SALDO = TOTAL DO DIA
                           
-                          const isPaymentGreaterThanTotal = paymentValue > totalBalance && paymentValue > 0;
+                          // Calcula o saldo que passará para o dia seguinte
+                          const nextDayBalance = totalDebt - paymentValue;
+                          const isPositiveNextDay = nextDayBalance > 0;
                           
                           let displayValue = guest.balance;
-                          if (isPaymentGreaterThanTotal && guest.balance) {
+                          if (isPositiveNextDay && guest.balance) {
                             displayValue = guest.balance + "+";
                           }
                           
@@ -939,7 +937,7 @@ export default function Home() {
                               placeholder="Valor"
                               className="border-gray-300 text-xs h-8 text-blue-600 font-semibold"
                               disabled={isLineBlocked}
-                              title={isPaymentGreaterThanTotal ? "Crédito a receber no dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                              title={isPositiveNextDay ? "Crédito a receber no dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                             />
                           );
                         })()}
