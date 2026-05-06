@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Download } from "lucide-react";
+import { Trash2, Plus, Download, RotateCcw, RotateCw } from "lucide-react";
 
 interface Guest {
   id: string;
@@ -13,27 +13,67 @@ interface Guest {
   paymentMethod: string;
 }
 
+const STORAGE_KEY = "hostel_guests_data";
+const HISTORY_KEY = "hostel_guests_history";
+
 export default function Home() {
-  const [guests, setGuests] = useState<Guest[]>([
-    ...Array.from({ length: 31 }, (_, index) => ({
-      id: String(index + 1),
-      day: String(index + 1).padStart(2, "0"),
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    })),
-    ...Array.from({ length: 5 }, (_, index) => ({
-      id: String(32 + index),
-      day: "",
-      guestName: "",
-      reservationEngine: "",
-      balance: "",
-      payment: "",
-      paymentMethod: "",
-    })),
-  ]);
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [history, setHistory] = useState<Guest[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Carregar dados do localStorage ao montar o componente
+  useEffect(() => {
+    const savedGuests = localStorage.getItem(STORAGE_KEY);
+    const savedHistory = localStorage.getItem(HISTORY_KEY);
+
+    if (savedGuests) {
+      const parsedGuests = JSON.parse(savedGuests);
+      setGuests(parsedGuests);
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        setHistory(parsedHistory);
+        setHistoryIndex(parsedHistory.length - 1);
+      }
+    } else {
+      const initialGuests = [
+        ...Array.from({ length: 31 }, (_, index) => ({
+          id: String(index + 1),
+          day: String(index + 1).padStart(2, "0"),
+          guestName: "",
+          reservationEngine: "",
+          balance: "",
+          payment: "",
+          paymentMethod: "",
+        })),
+        ...Array.from({ length: 5 }, (_, index) => ({
+          id: String(32 + index),
+          day: "",
+          guestName: "",
+          reservationEngine: "",
+          balance: "",
+          payment: "",
+          paymentMethod: "",
+        })),
+      ];
+      setGuests(initialGuests);
+      setHistory([initialGuests]);
+      setHistoryIndex(0);
+    }
+  }, []);
+
+  // Salvar dados no localStorage sempre que guests mudar
+  useEffect(() => {
+    if (guests.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
+    }
+  }, [guests]);
+
+  // Salvar histórico no localStorage sempre que history mudar
+  useEffect(() => {
+    if (history.length > 0) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+  }, [history]);
 
   const formatCurrency = (value: string): string => {
     let numericValue = value.replace(/\D/g, "");
@@ -54,6 +94,16 @@ export default function Home() {
   const convertCurrencyToNumber = (value: string): number => {
     const cleaned = value.replace(/R\$\s?/g, "").replace(/\./g, "").replace(",", ".");
     return parseFloat(cleaned) || 0;
+  };
+
+  const updateGuestsWithHistory = (newGuests: Guest[]) => {
+    setGuests(newGuests);
+    
+    // Adicionar ao histórico
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(newGuests);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
   };
 
   const handleInputChange = (id: string, field: keyof Guest, value: string) => {
@@ -78,15 +128,12 @@ export default function Home() {
         const currentBalance = convertCurrencyToNumber(currentGuest.balance);
         const currentPayment = convertCurrencyToNumber(currentGuest.payment);
         
-        // Se há saldo e não há pagamento, o saldo vai para o próximo dia
         if (currentBalance > 0 && currentPayment === 0) {
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
             balance: formatCurrency(String(Math.round(currentBalance * 100))),
           };
-        }
-        // Se há pagamento, diminui do saldo do próximo dia
-        else if (currentPayment > 0 && currentBalance > 0) {
+        } else if (currentPayment > 0 && currentBalance > 0) {
           const remainingBalance = currentBalance - currentPayment;
           if (remainingBalance > 0) {
             updatedGuests[currentGuestIndex + 1] = {
@@ -99,9 +146,7 @@ export default function Home() {
               balance: "",
             };
           }
-        }
-        // Se não há saldo ou foi zerado, limpa o saldo do próximo dia
-        else if (currentBalance === 0 && currentPayment === 0) {
+        } else if (currentBalance === 0 && currentPayment === 0) {
           updatedGuests[currentGuestIndex + 1] = {
             ...nextGuest,
             balance: "",
@@ -110,12 +155,12 @@ export default function Home() {
       }
     }
     
-    setGuests(updatedGuests);
+    updateGuestsWithHistory(updatedGuests);
   };
 
   const handleAddRow = () => {
     const newId = String(Math.max(...guests.map((g) => parseInt(g.id)), 0) + 1);
-    setGuests([
+    const newGuests = [
       ...guests,
       {
         id: newId,
@@ -126,11 +171,29 @@ export default function Home() {
         payment: "",
         paymentMethod: "",
       },
-    ]);
+    ];
+    updateGuestsWithHistory(newGuests);
   };
 
   const handleDeleteRow = (id: string) => {
-    setGuests(guests.filter((guest) => guest.id !== id));
+    const newGuests = guests.filter((guest) => guest.id !== id);
+    updateGuestsWithHistory(newGuests);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setGuests(history[newIndex]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setGuests(history[newIndex]);
+    }
   };
 
   const handleExport = () => {
@@ -157,6 +220,20 @@ export default function Home() {
     document.body.removeChild(element);
   };
 
+  const handleClearAll = () => {
+    if (confirm("Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.")) {
+      const clearedGuests = guests.map((g) => ({
+        ...g,
+        guestName: "",
+        reservationEngine: "",
+        balance: "",
+        payment: "",
+        paymentMethod: "",
+      }));
+      updateGuestsWithHistory(clearedGuests);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
@@ -174,7 +251,7 @@ export default function Home() {
         </div>
 
         {/* Controls */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-3 mb-6 flex-wrap">
           <Button
             onClick={handleAddRow}
             className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
@@ -183,12 +260,37 @@ export default function Home() {
             Adicionar Linha
           </Button>
           <Button
+            onClick={handleUndo}
+            disabled={historyIndex <= 0}
+            variant="outline"
+            className="flex items-center gap-2 border-gray-300"
+          >
+            <RotateCcw size={18} />
+            Desfazer
+          </Button>
+          <Button
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1}
+            variant="outline"
+            className="flex items-center gap-2 border-gray-300"
+          >
+            <RotateCw size={18} />
+            Refazer
+          </Button>
+          <Button
             onClick={handleExport}
             variant="outline"
             className="flex items-center gap-2 border-gray-300"
           >
             <Download size={18} />
             Exportar CSV
+          </Button>
+          <Button
+            onClick={handleClearAll}
+            variant="outline"
+            className="flex items-center gap-2 border-gray-300 text-orange-600 hover:text-orange-700"
+          >
+            Limpar Tudo
           </Button>
         </div>
 
@@ -337,6 +439,9 @@ export default function Home() {
           </p>
           <p className="text-xs text-gray-600 mt-2">
             <strong>Nota:</strong> Se houver saldo e sem pagamento, o saldo passa automaticamente para o dia seguinte. Se houver pagamento, ele diminui automaticamente do saldo do dia seguinte.
+          </p>
+          <p className="text-xs text-gray-600 mt-2">
+            <strong>Dados salvos automaticamente:</strong> Todos os seus dados são salvos automaticamente no navegador. Use os botões Desfazer/Refazer para navegar pelo histórico de alterações.
           </p>
         </div>
       </div>
