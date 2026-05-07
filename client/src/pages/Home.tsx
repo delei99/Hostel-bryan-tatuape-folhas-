@@ -1002,23 +1002,33 @@ export default function Home() {
                         })()}
                       </td>
                       <td className="px-3 py-3">
-                        <Input
-                          type="text"
-                          value={guest.payment}
-                          onChange={(e) =>
-                            handleInputChange(currentRoom.roomNumber, guest.id, "payment", e.target.value)
+                        {(() => {
+                          let displayValue = guest.payment;
+                          if (guest.payment) {
+                            // PAGAMENTO é positivo, então adiciona "+" após os centavos
+                            displayValue = guest.payment + "+";
                           }
-                          onFocus={() => setFocusedFieldId(`${guest.id}-payment`)}
-                          onBlur={() => setFocusedFieldId(null)}
-                          placeholder="Valor"
-                          className={`border-gray-300 text-xs h-8 ${
-                            guest.payment ? "text-red-600 font-semibold" : ""
-                          } ${
-                            focusedFieldId === `${guest.id}-payment` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
-                          }`}
-                          disabled={isLineBlocked}
-                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
-                        />
+                          
+                          return (
+                            <Input
+                              type="text"
+                              value={displayValue}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/\+/g, "");
+                                handleInputChange(currentRoom.roomNumber, guest.id, "payment", value);
+                              }}
+                              onFocus={() => setFocusedFieldId(`${guest.id}-payment`)}
+                              onBlur={() => setFocusedFieldId(null)}
+                              placeholder="Valor"
+                              className={`border-gray-300 text-xs h-8 text-red-600 font-semibold ${
+                                focusedFieldId === `${guest.id}-payment` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
+                              }`}
+                              disabled={isLineBlocked}
+                              title={isLineBlocked ? "Edição bloqueada após 00:00" : "Pagamento (crédito)"}
+                            />
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-3">
                         {(() => {
