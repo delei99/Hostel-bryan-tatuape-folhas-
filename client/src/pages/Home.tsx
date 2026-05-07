@@ -935,23 +935,33 @@ export default function Home() {
                         />
                       </td>
                       <td className="px-3 py-3">
-                        <Input
-                          type="text"
-                          value={guest.daily}
-                          onChange={(e) =>
-                            handleInputChange(currentRoom.roomNumber, guest.id, "daily", e.target.value)
+                        {(() => {
+                          let displayValue = guest.daily;
+                          if (guest.daily) {
+                            // DIÁRIA é negativa, então adiciona "-" após os centavos
+                            displayValue = guest.daily + "-";
                           }
-                          onFocus={() => setFocusedFieldId(`${guest.id}-daily`)}
-                          onBlur={() => setFocusedFieldId(null)}
-                          placeholder="Valor"
-                          className={`border-gray-300 text-xs h-8 ${
-                            guest.daily ? "text-blue-600 font-semibold" : ""
-                          } ${
-                            focusedFieldId === `${guest.id}-daily` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
-                          }`}
-                          disabled={isLineBlocked}
-                          title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
-                        />
+                          
+                          return (
+                            <Input
+                              type="text"
+                              value={displayValue}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/-/g, "");
+                                handleInputChange(currentRoom.roomNumber, guest.id, "daily", value);
+                              }}
+                              onFocus={() => setFocusedFieldId(`${guest.id}-daily`)}
+                              onBlur={() => setFocusedFieldId(null)}
+                              placeholder="Valor"
+                              className={`border-gray-300 text-xs h-8 text-blue-600 font-semibold ${
+                                focusedFieldId === `${guest.id}-daily` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
+                              }`}
+                              disabled={isLineBlocked}
+                              title={isLineBlocked ? "Edição bloqueada após 00:00" : "Diária (dívida)"}
+                            />
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-3">
                         {(() => {
