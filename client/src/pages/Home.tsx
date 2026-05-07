@@ -162,6 +162,7 @@ const createInitialRoomsData = (): RoomData[] => {
 };
 
 export default function Home() {
+  const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<RoomData[]>(() => {
     const savedRooms = localStorage.getItem(STORAGE_KEY);
     if (savedRooms) {
@@ -804,8 +805,12 @@ export default function Home() {
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "firstName", e.target.value)
                           }
+                          onFocus={() => setFocusedFieldId(`${guest.id}-firstName`)}
+                          onBlur={() => setFocusedFieldId(null)}
                           placeholder="Nome"
-                          className="border-gray-300 text-xs h-8"
+                          className={`border-gray-300 text-xs h-8 ${
+                            focusedFieldId === `${guest.id}-firstName` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
+                          }`}
                           required
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
@@ -818,8 +823,12 @@ export default function Home() {
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "lastName", e.target.value)
                           }
+                          onFocus={() => setFocusedFieldId(`${guest.id}-lastName`)}
+                          onBlur={() => setFocusedFieldId(null)}
                           placeholder="Sobrenome"
-                          className="border-gray-300 text-xs h-8"
+                          className={`border-gray-300 text-xs h-8 ${
+                            focusedFieldId === `${guest.id}-lastName` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
+                          }`}
                           required
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
@@ -833,9 +842,13 @@ export default function Home() {
                             onChange={(e) =>
                               handleInputChange(currentRoom.roomNumber, guest.id, "documentNumber", e.target.value)
                             }
+                            onFocus={() => setFocusedFieldId(`${guest.id}-documentNumber`)}
+                            onBlur={() => setFocusedFieldId(null)}
                             placeholder="CPF"
                             className={`border-gray-300 text-xs h-8 ${
                               guest.documentNumber && guest.cpfValid ? "border-green-500" : guest.documentNumber ? "border-red-500" : ""
+                            } ${
+                              focusedFieldId === `${guest.id}-documentNumber` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
                             }`}
                             disabled={isLineBlocked}
                             title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
@@ -928,9 +941,13 @@ export default function Home() {
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "daily", e.target.value)
                           }
+                          onFocus={() => setFocusedFieldId(`${guest.id}-daily`)}
+                          onBlur={() => setFocusedFieldId(null)}
                           placeholder="Valor"
                           className={`border-gray-300 text-xs h-8 ${
                             guest.daily ? "text-blue-600 font-semibold" : ""
+                          } ${
+                            focusedFieldId === `${guest.id}-daily` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
                           }`}
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
@@ -961,8 +978,12 @@ export default function Home() {
                                 value = value.replace(/\+/g, "");
                                 handleInputChange(currentRoom.roomNumber, guest.id, "launch", value);
                               }}
+                              onFocus={() => setFocusedFieldId(`${guest.id}-launch`)}
+                              onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className="border-gray-300 text-xs h-8 text-blue-600 font-semibold"
+                              className={`border-gray-300 text-xs h-8 text-blue-600 font-semibold ${
+                                focusedFieldId === `${guest.id}-launch` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
+                              }`}
                               disabled={isLineBlocked}
                               title={isPositiveNextDay ? "Crédito a receber no dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                             />
@@ -976,9 +997,13 @@ export default function Home() {
                           onChange={(e) =>
                             handleInputChange(currentRoom.roomNumber, guest.id, "payment", e.target.value)
                           }
+                          onFocus={() => setFocusedFieldId(`${guest.id}-payment`)}
+                          onBlur={() => setFocusedFieldId(null)}
                           placeholder="Valor"
                           className={`border-gray-300 text-xs h-8 ${
                             guest.payment ? "text-red-600 font-semibold" : ""
+                          } ${
+                            focusedFieldId === `${guest.id}-payment` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
                           }`}
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
