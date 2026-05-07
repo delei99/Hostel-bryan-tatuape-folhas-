@@ -965,8 +965,9 @@ export default function Home() {
                           const isPositiveNextDay = nextDayBalance > 0;
                           
                           let displayValue = guest.launch;
-                          if (isPositiveNextDay && guest.launch) {
-                            displayValue = guest.launch + "+";
+                          if (guest.launch) {
+                            // LANÇAMENTO é negativo, então adiciona "-" após os centavos
+                            displayValue = guest.launch + "-";
                           }
                           
                           return (
@@ -975,7 +976,7 @@ export default function Home() {
                               value={displayValue}
                               onChange={(e) => {
                                 let value = e.target.value;
-                                value = value.replace(/\+/g, "");
+                                value = value.replace(/-/g, "");
                                 handleInputChange(currentRoom.roomNumber, guest.id, "launch", value);
                               }}
                               onFocus={() => setFocusedFieldId(`${guest.id}-launch`)}
@@ -985,7 +986,7 @@ export default function Home() {
                                 focusedFieldId === `${guest.id}-launch` ? "fixed bottom-4 left-4 right-4 h-16 text-base z-50 rounded-lg" : ""
                               }`}
                               disabled={isLineBlocked}
-                              title={isPositiveNextDay ? "Crédito a receber no dia seguinte" : isLineBlocked ? "Edição bloqueada após 00:00" : ""}
+                              title={isLineBlocked ? "Edição bloqueada após 00:00" : "Lançamento (dívida)"}
                             />
                           );
                         })()}
