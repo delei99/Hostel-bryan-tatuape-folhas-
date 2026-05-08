@@ -798,7 +798,7 @@ export default function Home() {
                           />
                         )}
                       </td>
-                      <td className="px-6 py-2 min-w-40">
+                      <td className="px-6 py-2 min-w-65">
                         <Input
                           type="text"
                           value={guest.firstName}
@@ -816,7 +816,7 @@ export default function Home() {
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-6 py-2 min-w-40">
+                      <td className="px-6 py-2 min-w-65">
                         <Input
                           type="text"
                           value={guest.lastName}
@@ -834,7 +834,7 @@ export default function Home() {
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-6 py-2 min-w-40">
+                      <td className="px-6 py-2 min-w-65">
                         <div className="flex items-center gap-1">
                           <Input
                             type="text"
