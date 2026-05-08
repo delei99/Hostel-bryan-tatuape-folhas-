@@ -792,7 +792,7 @@ export default function Home() {
                               handleInputChange(currentRoom.roomNumber, guest.id, "day", e.target.value)
                             }
                             placeholder="Dia"
-                            className="border-gray-300 text-base h-14 font-bold w-full"
+                            className="border-gray-300 text-base h-8 font-bold w-full"
                             disabled={isLineBlocked}
                             title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                           />
@@ -808,7 +808,7 @@ export default function Home() {
                           onFocus={() => setFocusedFieldId(`${guest.id}-firstName`)}
                           onBlur={() => setFocusedFieldId(null)}
                           placeholder="Nome"
-                          className={`border-gray-300 text-base h-14 font-bold w-full ${
+                          className={`border-gray-300 text-base h-8 font-bold w-full ${
                             false ? "" : ""
                           }`}
                           required
@@ -826,7 +826,7 @@ export default function Home() {
                           onFocus={() => setFocusedFieldId(`${guest.id}-lastName`)}
                           onBlur={() => setFocusedFieldId(null)}
                           placeholder="Sobrenome"
-                          className={`border-gray-300 text-base h-14 font-bold w-full ${
+                          className={`border-gray-300 text-base h-8 font-bold w-full ${
                             false ? "" : ""
                           }`}
                           required
@@ -845,7 +845,7 @@ export default function Home() {
                             onFocus={() => setFocusedFieldId(`${guest.id}-documentNumber`)}
                             onBlur={() => setFocusedFieldId(null)}
                             placeholder="CPF"
-                            className={`border-gray-300 text-base h-14 font-bold w-full ${
+                            className={`border-gray-300 text-base h-8 font-bold w-full ${
                               guest.documentNumber && guest.cpfValid ? "border-green-500" : guest.documentNumber ? "border-red-500" : ""
                             } ${
                               false ? "" : ""
@@ -929,7 +929,7 @@ export default function Home() {
                             )
                           }
                           placeholder="Motor"
-                          className="border-gray-300 text-base h-14 font-bold w-full"
+                          className="border-gray-300 text-base h-8 font-bold w-full"
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
@@ -954,7 +954,7 @@ export default function Home() {
                               onFocus={() => setFocusedFieldId(`${guest.id}-daily`)}
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className={`border-gray-300 text-base h-14 text-blue-600 font-bold w-full ${
+                              className={`border-gray-300 text-base h-8 text-blue-600 font-bold w-full ${
                                 false ? "" : ""
                               }`}
                               disabled={isLineBlocked}
@@ -992,7 +992,7 @@ export default function Home() {
                               onFocus={() => setFocusedFieldId(`${guest.id}-launch`)}
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className={`border-gray-300 text-base h-14 text-blue-600 font-bold w-full ${
+                              className={`border-gray-300 text-base h-8 text-blue-600 font-bold w-full ${
                                 false ? "" : ""
                               }`}
                               disabled={isLineBlocked}
@@ -1021,7 +1021,7 @@ export default function Home() {
                               onFocus={() => setFocusedFieldId(`${guest.id}-payment`)}
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className={`border-gray-300 text-base h-14 text-red-600 font-bold w-full ${
+                              className={`border-gray-300 text-base h-8 text-red-600 font-bold w-full ${
                                 false ? "" : ""
                               }`}
                               disabled={isLineBlocked}
@@ -1045,7 +1045,7 @@ export default function Home() {
                               value={displayValue}
                               readOnly
                               placeholder="-"
-                              className={`border-gray-300 text-base h-14 text-blue-600 font-bold bg-gray-50 w-full`}
+                              className={`border-gray-300 text-base h-8 text-blue-600 font-bold bg-gray-50 w-full`}
                               title="Saldo Final (calculado automaticamente)"
                             />
                           );
@@ -1064,7 +1064,7 @@ export default function Home() {
                             )
                           }
                           placeholder="PIX"
-                          className="border-gray-300 text-base h-14 font-bold w-full"
+                          className="border-gray-300 text-base h-8 font-bold w-full"
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
