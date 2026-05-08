@@ -776,7 +776,7 @@ export default function Home() {
                         isLineBlocked ? "bg-gray-100 opacity-60" : index % 2 === 0 ? "bg-white" : "bg-slate-50"
                       } ${isLineBlocked ? "hover:bg-gray-100" : "hover:bg-blue-50"} transition-colors`}
                     >
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         {index < 31 ? (
                           <div className={`font-semibold ${
                             isLineBlocked ? "text-gray-500 bg-yellow-100 px-2 py-1 rounded border border-yellow-300" : "text-gray-900"
@@ -792,13 +792,13 @@ export default function Home() {
                               handleInputChange(currentRoom.roomNumber, guest.id, "day", e.target.value)
                             }
                             placeholder="Dia"
-                            className="border-gray-300 text-sm h-12 font-bold w-full"
+                            className="border-gray-300 text-sm h-10 font-bold w-full"
                             disabled={isLineBlocked}
                             title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                           />
                         )}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <Input
                           type="text"
                           value={guest.firstName}
@@ -808,7 +808,7 @@ export default function Home() {
                           onFocus={() => setFocusedFieldId(`${guest.id}-firstName`)}
                           onBlur={() => setFocusedFieldId(null)}
                           placeholder="Nome"
-                          className={`border-gray-300 text-sm h-12 font-bold w-full ${
+                          className={`border-gray-300 text-sm h-10 font-bold w-full ${
                             focusedFieldId === `${guest.id}-firstName` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
                           }`}
                           required
@@ -816,7 +816,7 @@ export default function Home() {
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <Input
                           type="text"
                           value={guest.lastName}
@@ -826,7 +826,7 @@ export default function Home() {
                           onFocus={() => setFocusedFieldId(`${guest.id}-lastName`)}
                           onBlur={() => setFocusedFieldId(null)}
                           placeholder="Sobrenome"
-                          className={`border-gray-300 text-sm h-12 font-bold w-full ${
+                          className={`border-gray-300 text-sm h-10 font-bold w-full ${
                             focusedFieldId === `${guest.id}-lastName` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
                           }`}
                           required
@@ -834,7 +834,7 @@ export default function Home() {
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <div className="flex items-center gap-1">
                           <Input
                             type="text"
@@ -845,7 +845,7 @@ export default function Home() {
                             onFocus={() => setFocusedFieldId(`${guest.id}-documentNumber`)}
                             onBlur={() => setFocusedFieldId(null)}
                             placeholder="CPF"
-                            className={`border-gray-300 text-sm h-12 font-bold w-full ${
+                            className={`border-gray-300 text-sm h-10 font-bold w-full ${
                               guest.documentNumber && guest.cpfValid ? "border-green-500" : guest.documentNumber ? "border-red-500" : ""
                             } ${
                               focusedFieldId === `${guest.id}-documentNumber` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
@@ -860,7 +860,7 @@ export default function Home() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <div className="flex items-center gap-1">
                           <label className={`cursor-pointer ${isLineBlocked ? "opacity-50 cursor-not-allowed" : ""}`}>
                             <input
@@ -888,7 +888,7 @@ export default function Home() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <div className="flex items-center gap-1">
                           <label className={`cursor-pointer ${isLineBlocked ? "opacity-50 cursor-not-allowed" : ""}`}>
                             <input
@@ -916,7 +916,7 @@ export default function Home() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <Input
                           type="text"
                           value={guest.reservationEngine}
@@ -929,12 +929,12 @@ export default function Home() {
                             )
                           }
                           placeholder="Motor"
-                          className="border-gray-300 text-sm h-12 font-bold w-full"
+                          className="border-gray-300 text-sm h-10 font-bold w-full"
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         {(() => {
                           let displayValue = guest.daily;
                           if (guest.daily) {
@@ -954,7 +954,7 @@ export default function Home() {
                               onFocus={() => setFocusedFieldId(`${guest.id}-daily`)}
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className={`border-gray-300 text-sm h-12 text-blue-600 font-bold w-full ${
+                              className={`border-gray-300 text-sm h-10 text-blue-600 font-bold w-full ${
                                 focusedFieldId === `${guest.id}-daily` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
                               }`}
                               disabled={isLineBlocked}
@@ -963,7 +963,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         {(() => {
                           const launchValue = convertCurrencyToNumber(guest.launch);
                           const paymentValue = convertCurrencyToNumber(guest.payment);
@@ -992,7 +992,7 @@ export default function Home() {
                               onFocus={() => setFocusedFieldId(`${guest.id}-launch`)}
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className={`border-gray-300 text-sm h-12 text-blue-600 font-bold w-full ${
+                              className={`border-gray-300 text-sm h-10 text-blue-600 font-bold w-full ${
                                 focusedFieldId === `${guest.id}-launch` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
                               }`}
                               disabled={isLineBlocked}
@@ -1001,7 +1001,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         {(() => {
                           let displayValue = guest.payment;
                           if (guest.payment) {
@@ -1021,7 +1021,7 @@ export default function Home() {
                               onFocus={() => setFocusedFieldId(`${guest.id}-payment`)}
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
-                              className={`border-gray-300 text-sm h-12 text-red-600 font-bold w-full ${
+                              className={`border-gray-300 text-sm h-10 text-red-600 font-bold w-full ${
                                 focusedFieldId === `${guest.id}-payment` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
                               }`}
                               disabled={isLineBlocked}
@@ -1030,7 +1030,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         {(() => {
                           const finalBalanceValue = convertCurrencyToNumber(guest.finalBalance);
                           let displayValue = guest.finalBalance;
@@ -1045,13 +1045,13 @@ export default function Home() {
                               value={displayValue}
                               readOnly
                               placeholder="-"
-                              className={`border-gray-300 text-sm h-12 text-blue-600 font-bold bg-gray-50 w-full`}
+                              className={`border-gray-300 text-sm h-10 text-blue-600 font-bold bg-gray-50 w-full`}
                               title="Saldo Final (calculado automaticamente)"
                             />
                           );
                         })()}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-6 py-2">
                         <Input
                           type="text"
                           value={guest.paymentMethod}
@@ -1064,7 +1064,7 @@ export default function Home() {
                             )
                           }
                           placeholder="PIX"
-                          className="border-gray-300 text-sm h-12 font-bold w-full"
+                          className="border-gray-300 text-sm h-10 font-bold w-full"
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
