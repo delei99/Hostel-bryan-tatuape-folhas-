@@ -1092,7 +1092,7 @@ export default function Home() {
                               e.target.value
                             )
                           }
-                          className="border-gray-300 text-sm h-10 font-bold w-40 border rounded"
+                          className="border-gray-300 text-sm h-10 font-bold w-20 border rounded"
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : "Horário de Entrada"}
                         >
@@ -1119,7 +1119,7 @@ export default function Home() {
                               e.target.value
                             )
                           }
-                          className="border-gray-300 text-sm h-10 font-bold w-40 border rounded"
+                          className="border-gray-300 text-sm h-10 font-bold w-20 border rounded"
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : "Horário de Saída"}
                         >
