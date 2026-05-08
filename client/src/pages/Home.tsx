@@ -780,7 +780,7 @@ export default function Home() {
                   {currentRoom.guests.map((guest, index) => {
                     const currentDay = getCurrentDay();
                     const guestDay = parseInt(guest.day, 10);
-                    const isLineBlocked = guestDay === currentDay && isAfterMidnight();
+                    const isLineBlocked = (guestDay < currentDay || (guestDay === currentDay && isAfterMidnight())) && index < 31;
                     return (
                     <tr
                       key={guest.id}
