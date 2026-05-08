@@ -19,6 +19,8 @@ interface Guest {
   payment: string;
   finalBalance: string;
   paymentMethod: string;
+  entryTime: string;
+  exitTime: string;
   cpfValid: boolean;
 }
 
@@ -103,6 +105,8 @@ const normalizeGuest = (guest: any): Guest => ({
   payment: guest.payment ?? "",
   finalBalance: guest.finalBalance ?? "",
   paymentMethod: guest.paymentMethod ?? "",
+  entryTime: guest.entryTime ?? "",
+  exitTime: guest.exitTime ?? "",
   cpfValid: guest.cpfValid ?? false,
 });
 
@@ -125,6 +129,8 @@ const createInitialGuestsForRoom = (): Guest[] => {
       payment: "",
       finalBalance: "",
       paymentMethod: "",
+      entryTime: "",
+      exitTime: "",
       cpfValid: false,
     })),
     ...Array.from({ length: 5 }, (_, index) => ({
@@ -143,6 +149,8 @@ const createInitialGuestsForRoom = (): Guest[] => {
       payment: "",
       finalBalance: "",
       paymentMethod: "",
+      entryTime: "",
+      exitTime: "",
       cpfValid: false,
     })),
   ];
@@ -537,6 +545,8 @@ export default function Home() {
         payment: "",
         finalBalance: "",
         paymentMethod: "",
+        entryTime: "",
+        exitTime: "",
         cpfValid: false,
       },
     ];
@@ -760,6 +770,8 @@ export default function Home() {
                     <th className="px-3 py-3 text-left font-semibold text-xs">PAGAMENTO</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">SALDO FINAL</th>
                     <th className="px-3 py-3 text-left font-semibold text-xs">FORMA PAG.</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">ENTRADA</th>
+                    <th className="px-3 py-3 text-left font-semibold text-xs">SAÍDA</th>
                     <th className="px-3 py-3 text-center font-semibold text-xs">RECIBO</th>
                     <th className="px-3 py-3 text-center font-semibold text-xs">AÇÃO</th>
                   </tr>
@@ -1068,6 +1080,60 @@ export default function Home() {
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
+                      </td>
+                      <td className="px-6 py-2">
+                        <select
+                          value={guest.entryTime}
+                          onChange={(e) =>
+                            handleInputChange(
+                              currentRoom.roomNumber,
+                              guest.id,
+                              "entryTime",
+                              e.target.value
+                            )
+                          }
+                          className="border-gray-300 text-sm h-10 font-bold w-full border rounded"
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : "Horário de Entrada"}
+                        >
+                          <option value="">--:--</option>
+                          {Array.from({ length: 144 }, (_, i) => {
+                            const hours = Math.floor(i / 6);
+                            const minutes = (i % 6) * 10;
+                            return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+                          }).map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-6 py-2">
+                        <select
+                          value={guest.exitTime}
+                          onChange={(e) =>
+                            handleInputChange(
+                              currentRoom.roomNumber,
+                              guest.id,
+                              "exitTime",
+                              e.target.value
+                            )
+                          }
+                          className="border-gray-300 text-sm h-10 font-bold w-full border rounded"
+                          disabled={isLineBlocked}
+                          title={isLineBlocked ? "Edição bloqueada após 00:00" : "Horário de Saída"}
+                        >
+                          <option value="">--:--</option>
+                          {Array.from({ length: 144 }, (_, i) => {
+                            const hours = Math.floor(i / 6);
+                            const minutes = (i % 6) * 10;
+                            return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+                          }).map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <Button
