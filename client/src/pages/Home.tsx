@@ -916,7 +916,7 @@ export default function Home() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-2">
+                      <td className="px-6 py-2 min-w-80">
                         <Input
                           type="text"
                           value={guest.reservationEngine}
@@ -1051,7 +1051,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-2">
+                      <td className="px-6 py-2 min-w-80">
                         <Input
                           type="text"
                           value={guest.paymentMethod}
