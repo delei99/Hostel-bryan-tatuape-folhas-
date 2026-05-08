@@ -798,7 +798,7 @@ export default function Home() {
                           />
                         )}
                       </td>
-                      <td className="px-6 py-2 min-w-65">
+                      <td className="px-6 py-2 min-w-62">
                         <Input
                           type="text"
                           value={guest.firstName}
@@ -809,14 +809,14 @@ export default function Home() {
                           onBlur={() => setFocusedFieldId(null)}
                           placeholder="Nome"
                           className={`border-gray-300 text-sm h-10 font-bold w-full ${
-                            focusedFieldId === `${guest.id}-firstName` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
+                            false ? "" : ""
                           }`}
                           required
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-6 py-2 min-w-65">
+                      <td className="px-6 py-2 min-w-62">
                         <Input
                           type="text"
                           value={guest.lastName}
@@ -827,14 +827,14 @@ export default function Home() {
                           onBlur={() => setFocusedFieldId(null)}
                           placeholder="Sobrenome"
                           className={`border-gray-300 text-sm h-10 font-bold w-full ${
-                            focusedFieldId === `${guest.id}-lastName` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
+                            false ? "" : ""
                           }`}
                           required
                           disabled={isLineBlocked}
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-6 py-2 min-w-65">
+                      <td className="px-6 py-2 min-w-62">
                         <div className="flex items-center gap-1">
                           <Input
                             type="text"
@@ -848,7 +848,7 @@ export default function Home() {
                             className={`border-gray-300 text-sm h-10 font-bold w-full ${
                               guest.documentNumber && guest.cpfValid ? "border-green-500" : guest.documentNumber ? "border-red-500" : ""
                             } ${
-                              focusedFieldId === `${guest.id}-documentNumber` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
+                              false ? "" : ""
                             }`}
                             disabled={isLineBlocked}
                             title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
@@ -955,7 +955,7 @@ export default function Home() {
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
                               className={`border-gray-300 text-sm h-10 text-blue-600 font-bold w-full ${
-                                focusedFieldId === `${guest.id}-daily` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
+                                false ? "" : ""
                               }`}
                               disabled={isLineBlocked}
                               title={isLineBlocked ? "Edição bloqueada após 00:00" : "Diária (dívida)"}
@@ -993,7 +993,7 @@ export default function Home() {
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
                               className={`border-gray-300 text-sm h-10 text-blue-600 font-bold w-full ${
-                                focusedFieldId === `${guest.id}-launch` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
+                                false ? "" : ""
                               }`}
                               disabled={isLineBlocked}
                               title={isLineBlocked ? "Edição bloqueada após 00:00" : "Lançamento (dívida)"}
@@ -1022,7 +1022,7 @@ export default function Home() {
                               onBlur={() => setFocusedFieldId(null)}
                               placeholder="Valor"
                               className={`border-gray-300 text-sm h-10 text-red-600 font-bold w-full ${
-                                focusedFieldId === `${guest.id}-payment` ? "fixed bottom-4 left-4 right-4 h-20 text-lg z-50 rounded-lg" : ""
+                                false ? "" : ""
                               }`}
                               disabled={isLineBlocked}
                               title={isLineBlocked ? "Edição bloqueada após 00:00" : "Pagamento (crédito)"}
