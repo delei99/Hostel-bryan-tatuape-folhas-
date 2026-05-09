@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File, Printer } from "lucide-react";
+import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File, Printer, Lock, Edit3 } from "lucide-react";
 
 interface Guest {
   id: string;
@@ -31,7 +31,18 @@ interface RoomData {
   historyIndex: number;
 }
 
+interface ChangeLog {
+  id: string;
+  guestId: string;
+  field: string;
+  oldValue: string;
+  newValue: string;
+  timestamp: string;
+  day: string;
+}
+
 const STORAGE_KEY = "hostel_rooms_data";
+const CHANGELOG_STORAGE_KEY = "hostel_changelog";
 const NUM_ROOMS = 7;
 
 // Obter dia atual do mês
@@ -193,6 +204,11 @@ export default function Home() {
 
   const [selectedRoom, setSelectedRoom] = useState(1);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [changelog, setChangelog] = useState<ChangeLog[]>(() => {
+    const stored = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [showChangelogPanel, setShowChangelogPanel] = useState(false);
 
   // Salvar dados no localStorage sempre que rooms mudar
   useEffect(() => {
@@ -222,6 +238,35 @@ export default function Home() {
     return parseFloat(cleaned) || 0;
   };
 
+  const addToChangelog = (guestId: string, field: string, oldValue: string, newValue: string, day: string) => {
+    const newEntry: ChangeLog = {
+      id: String(Date.now()),
+      guestId,
+      field,
+      oldValue,
+      newValue,
+      timestamp: new Date().toLocaleString('pt-BR'),
+      day,
+    };
+    setChangelog((prev: ChangeLog[]) => [newEntry, ...prev]);
+  };
+
+  const exportChangelog = () => {
+    const csv = [
+      'Data/Hora,Dia,ID Hospede,Campo,Valor Anterior,Novo Valor',
+      ...changelog.map(
+        (entry: ChangeLog) =>
+          `"${entry.timestamp}","${entry.day}","${entry.guestId}","${entry.field}","${entry.oldValue}","${entry.newValue}"`
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `historico_alteracoes_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   const updateRoomData = (roomNumber: number, newGuests: Guest[], newHistory: Guest[][], newHistoryIndex: number) => {
     setRooms(
       rooms.map((room) =>
@@ -240,6 +285,11 @@ export default function Home() {
   const handleInputChange = (roomNumber: number, id: string, field: keyof Guest, value: string) => {
     const room = rooms.find((r) => r.roomNumber === roomNumber);
     if (!room) return;
+
+    const guest = room.guests.find((g) => g.id === id);
+    if (!guest) return;
+
+    const oldValue = String(guest[field]);
 
     let finalValue = value;
     let cpfValid = false;
@@ -307,6 +357,10 @@ export default function Home() {
       }
     }
     
+    if (oldValue !== finalValue) {
+      addToChangelog(id, String(field), oldValue, finalValue, guest.day);
+    }
+
     const newHistory = room.history.slice(0, room.historyIndex + 1);
     newHistory.push(updatedGuests);
     updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
@@ -790,10 +844,15 @@ export default function Home() {
                     >
                       <td className="px-6 py-2">
                         {index < 31 ? (
-                          <div className={`font-semibold ${
+                          <div className={`font-semibold flex items-center gap-2 ${
                             isLineBlocked ? "text-gray-500 bg-yellow-100 px-2 py-1 rounded border border-yellow-300" : "text-gray-900"
                           }`}
-                          title={isLineBlocked ? "Dia de hoje - Visualização apenas após 00:00" : ""}>
+                          title={isLineBlocked ? "Dia bloqueado - Visualização apenas" : "Dia editável"}>
+                            {isLineBlocked ? (
+                              <Lock size={14} className="text-yellow-600" />
+                            ) : (
+                              <Edit3 size={14} className="text-blue-600" />
+                            )}
                             {guest.day}
                           </div>
                         ) : (
@@ -1186,6 +1245,49 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <div className="mt-8 bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">Histórico de Alterações</h3>
+          <Button
+            onClick={exportChangelog}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Download size={16} />
+            Exportar Histórico
+          </Button>
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {changelog.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Nenhuma alteração registrada</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-3 py-2 text-left font-semibold">Data/Hora</th>
+                  <th className="px-3 py-2 text-left font-semibold">Dia</th>
+                  <th className="px-3 py-2 text-left font-semibold">Campo</th>
+                  <th className="px-3 py-2 text-left font-semibold">Valor Anterior</th>
+                  <th className="px-3 py-2 text-left font-semibold">Novo Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {changelog.map((entry) => (
+                  <tr key={entry.id} className="border-b hover:bg-gray-50">
+                    <td className="px-3 py-2">{entry.timestamp}</td>
+                    <td className="px-3 py-2">{entry.day}</td>
+                    <td className="px-3 py-2">{entry.field}</td>
+                    <td className="px-3 py-2 text-gray-600">{entry.oldValue || '-'}</td>
+                    <td className="px-3 py-2 font-semibold text-blue-600">{entry.newValue}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
