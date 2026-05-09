@@ -987,7 +987,7 @@ export default function Home() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-2 min-w-30">
+                      <td className="px-6 py-2 min-w-40">
                         <Input
                           type="text"
                           value={guest.reservationEngine}
@@ -1005,7 +1005,7 @@ export default function Home() {
                           title={isLineBlocked ? "Edição bloqueada após 00:00" : ""}
                         />
                       </td>
-                      <td className="px-6 py-2 min-w-30">
+                      <td className="px-6 py-2 min-w-40">
                         {(() => {
                           let displayValue = guest.daily;
                           if (guest.daily) {
@@ -1034,7 +1034,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-2 min-w-30">
+                      <td className="px-6 py-2 min-w-40">
                         {(() => {
                           const launchValue = convertCurrencyToNumber(guest.launch);
                           const paymentValue = convertCurrencyToNumber(guest.payment);
@@ -1072,7 +1072,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-2 min-w-30">
+                      <td className="px-6 py-2 min-w-40">
                         {(() => {
                           let displayValue = guest.payment;
                           if (guest.payment) {
@@ -1101,7 +1101,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-2 min-w-30">
+                      <td className="px-6 py-2 min-w-40">
                         {(() => {
                           const finalBalanceValue = convertCurrencyToNumber(guest.finalBalance);
                           let displayValue = guest.finalBalance;
@@ -1122,7 +1122,7 @@ export default function Home() {
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-2 min-w-30">
+                      <td className="px-6 py-2 min-w-40">
                         <Input
                           type="text"
                           value={guest.paymentMethod}
