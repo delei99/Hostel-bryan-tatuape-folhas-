@@ -1245,48 +1245,72 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold">Histórico de Alterações</h3>
-          <Button
-            onClick={exportChangelog}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Download size={16} />
-            Exportar Histórico
-          </Button>
-        </div>
-        <div className="max-h-64 overflow-y-auto">
-          {changelog.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Nenhuma alteração registrada</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-3 py-2 text-left font-semibold">Data/Hora</th>
-                  <th className="px-3 py-2 text-left font-semibold">Dia</th>
-                  <th className="px-3 py-2 text-left font-semibold">Campo</th>
-                  <th className="px-3 py-2 text-left font-semibold">Valor Anterior</th>
-                  <th className="px-3 py-2 text-left font-semibold">Novo Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {changelog.map((entry) => (
-                  <tr key={entry.id} className="border-b hover:bg-gray-50">
-                    <td className="px-3 py-2">{entry.timestamp}</td>
-                    <td className="px-3 py-2">{entry.day}</td>
-                    <td className="px-3 py-2">{entry.field}</td>
-                    <td className="px-3 py-2 text-gray-600">{entry.oldValue || '-'}</td>
-                    <td className="px-3 py-2 font-semibold text-blue-600">{entry.newValue}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+      <div className="mt-6 flex gap-3">
+        <Button
+          onClick={() => setShowChangelogPanel(true)}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Download size={16} />
+          Ver Histórico de Alterações
+        </Button>
       </div>
+
+      {showChangelogPanel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+          <div className="bg-white w-full max-h-96 rounded-t-lg shadow-lg flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-lg font-bold">Histórico de Alterações</h3>
+              <div className="flex gap-2">
+                <Button
+                  onClick={exportChangelog}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  Exportar CSV
+                </Button>
+                <Button
+                  onClick={() => setShowChangelogPanel(false)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {changelog.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Nenhuma alteração registrada</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 sticky top-0">
+                      <th className="px-4 py-2 text-left font-semibold">Data/Hora</th>
+                      <th className="px-4 py-2 text-left font-semibold">Dia</th>
+                      <th className="px-4 py-2 text-left font-semibold">Campo</th>
+                      <th className="px-4 py-2 text-left font-semibold">Anterior</th>
+                      <th className="px-4 py-2 text-left font-semibold">Novo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {changelog.map((entry) => (
+                      <tr key={entry.id} className="border-b hover:bg-blue-50">
+                        <td className="px-4 py-2 text-xs">{entry.timestamp}</td>
+                        <td className="px-4 py-2 font-semibold">{entry.day}</td>
+                        <td className="px-4 py-2">{entry.field}</td>
+                        <td className="px-4 py-2 text-gray-600">{entry.oldValue || '-'}</td>
+                        <td className="px-4 py-2 font-semibold text-blue-600">{entry.newValue}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
