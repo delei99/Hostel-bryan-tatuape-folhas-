@@ -115,7 +115,20 @@ export default function AdminPanel() {
     });
 
     setRoomsData(updatedRooms);
-    localStorage.setItem("hostel_rooms_data", JSON.stringify(updatedRooms));
+    try {
+      localStorage.setItem("hostel_rooms_data", JSON.stringify(updatedRooms));
+    } catch (e: any) {
+      if (e?.name === "QuotaExceededError" || e?.code === 22) {
+        // Salvar versão compactada sem binários
+        const compact = updatedRooms.map((room: any) => ({
+          ...room,
+          guests: room.guests.map((g: any) => ({ ...g, documentFile: "", photoFile: "" })),
+          history: [],
+          historyIndex: 0,
+        }));
+        try { localStorage.setItem("hostel_rooms_data", JSON.stringify(compact)); } catch {}
+      }
+    }
     setEditingCell(null);
     toast.success("Dados atualizados com sucesso!");
   };

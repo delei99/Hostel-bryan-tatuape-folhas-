@@ -47,6 +47,75 @@ interface ChangeLog {
 const STORAGE_KEY = "hostel_rooms_data";
 const CHANGELOG_STORAGE_KEY = "hostel_changelog";
 const NUM_ROOMS = 7;
+const MAX_HISTORY_SIZE = 10; // Limitar histórico para evitar estouro de quota
+
+// Salvar no localStorage com tratamento de erro de quota
+function safeLocalStorageSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e: any) {
+    if (e?.name === "QuotaExceededError" || e?.code === 22) {
+      console.warn("[localStorage] Quota excedida ao salvar '", key, "'. Tentando compactar...");
+      // Tentar salvar versão sem arquivos (documentFile/photoFile)
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          const compact = parsed.map((room: any) => ({
+            ...room,
+            guests: room.guests.map((g: any) => ({
+              ...g,
+              documentFile: "",
+              photoFile: "",
+            })),
+            history: [], // Limpar histórico
+            historyIndex: 0,
+          }));
+          localStorage.setItem(key, JSON.stringify(compact));
+          console.warn("[localStorage] Dados salvos sem arquivos binários.");
+        }
+      } catch (e2) {
+        console.error("[localStorage] Falha ao salvar mesmo após compactação:", e2);
+      }
+    } else {
+      throw e;
+    }
+  }
+}
+
+// Fazer upload de arquivo via API do servidor
+async function uploadFileToServer(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const fileData = e.target?.result as string;
+      try {
+        const resp = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileData,
+            contentType: file.type || "application/octet-stream",
+          }),
+        });
+        if (!resp.ok) {
+          // Fallback: usar base64 local se o servidor falhar
+          console.warn("[Upload] Servidor indisponível, usando base64 local.");
+          resolve(fileData);
+          return;
+        }
+        const { url } = await resp.json();
+        resolve(url);
+      } catch (err) {
+        // Fallback: usar base64 local
+        console.warn("[Upload] Erro no upload, usando base64 local:", err);
+        resolve(fileData);
+      }
+    };
+    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+    reader.readAsDataURL(file);
+  });
+}
 
 // Obter dia atual do mês
 const getCurrentDay = (): number => {
@@ -226,7 +295,26 @@ export default function Home() {
   // Salvar dados no localStorage sempre que rooms mudar
   useEffect(() => {
     if (rooms.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+      // Salvar versão sem binários base64 no localStorage (arquivos ficam no servidor)
+      const roomsToSave = rooms.map((room) => ({
+        ...room,
+        // Manter apenas a URL do arquivo (não o base64 completo)
+        guests: room.guests.map((g) => ({
+          ...g,
+          // Se documentFile é base64 (começa com "data:"), não salvar no localStorage
+          documentFile: g.documentFile.startsWith("data:") ? "" : g.documentFile,
+          photoFile: g.photoFile.startsWith("data:") ? "" : g.photoFile,
+        })),
+        // Limitar histórico para evitar estouro de quota
+        history: room.history.slice(-MAX_HISTORY_SIZE).map((guests) =>
+          guests.map((g) => ({
+            ...g,
+            documentFile: g.documentFile.startsWith("data:") ? "" : g.documentFile,
+            photoFile: g.photoFile.startsWith("data:") ? "" : g.photoFile,
+          }))
+        ),
+      }));
+      safeLocalStorageSet(STORAGE_KEY, JSON.stringify(roomsToSave));
     }
   }, [rooms]);
 
@@ -281,14 +369,19 @@ export default function Home() {
   };
 
   const updateRoomData = (roomNumber: number, newGuests: Guest[], newHistory: Guest[][], newHistoryIndex: number) => {
+    // Limitar o tamanho do histórico para evitar estouro de quota do localStorage
+    const limitedHistory = newHistory.length > MAX_HISTORY_SIZE
+      ? newHistory.slice(newHistory.length - MAX_HISTORY_SIZE)
+      : newHistory;
+    const limitedIndex = Math.min(newHistoryIndex, limitedHistory.length - 1);
     setRooms(
       rooms.map((room) =>
         room.roomNumber === roomNumber
           ? {
               ...room,
               guests: newGuests,
-              history: newHistory,
-              historyIndex: newHistoryIndex,
+              history: limitedHistory,
+              historyIndex: limitedIndex,
             }
           : room
       )
@@ -379,24 +472,24 @@ export default function Home() {
     updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
   };
 
-  const handleFileUpload = (roomNumber: number, id: string, file: File, fileType: "document" | "photo") => {
+  const handleFileUpload = async (roomNumber: number, id: string, file: File, fileType: "document" | "photo") => {
     const room = rooms.find((r) => r.roomNumber === roomNumber);
     if (!room) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const fileContent = e.target?.result as string;
+    try {
+      // Fazer upload para o servidor (S3) para evitar estouro de quota do localStorage
+      const fileUrl = await uploadFileToServer(file);
       const updatedGuests = room.guests.map((guest) =>
         guest.id === id
           ? fileType === "document"
             ? {
                 ...guest,
-                documentFile: fileContent,
+                documentFile: fileUrl,
                 documentFileName: file.name,
               }
             : {
                 ...guest,
-                photoFile: fileContent,
+                photoFile: fileUrl,
                 photoFileName: file.name,
               }
           : guest
@@ -405,8 +498,9 @@ export default function Home() {
       const newHistory = room.history.slice(0, room.historyIndex + 1);
       newHistory.push(updatedGuests);
       updateRoomData(roomNumber, updatedGuests, newHistory, newHistory.length - 1);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("[handleFileUpload] Erro ao processar arquivo:", err);
+    }
   };
 
   const generateReceipt = (roomNumber: number, guest: Guest) => {
