@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
+import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File, Printer, Lock, Edit3 } from "lucide-react";
@@ -181,6 +184,16 @@ const createInitialRoomsData = (): RoomData[] => {
 };
 
 export default function Home() {
+  const { user, loading, isAuthenticated, logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // Redirecionar para login se não autenticado
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      window.location.href = getLoginUrl();
+    }
+  }, [loading, isAuthenticated]);
+
   const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<RoomData[]>(() => {
     const savedRooms = localStorage.getItem(STORAGE_KEY);
