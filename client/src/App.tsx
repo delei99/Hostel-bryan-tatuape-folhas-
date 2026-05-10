@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
 import AuthorizationRequest from "./pages/AuthorizationRequest";
+import Tutorial from "./pages/Tutorial";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -23,7 +24,8 @@ function Router() {
   
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path={""} component={Home} />
+      <Route path={"/tutorial"} component={Tutorial} />
       <Route path={"/admin"} component={AdminPanel} />
       <Route path={"/authorization"} component={AuthorizationRequest} />
       <Route path={"/404"} component={NotFound} />

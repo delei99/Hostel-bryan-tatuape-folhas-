@@ -939,6 +939,20 @@ export default function Home() {
             >
               Limpar Tudo
             </Button>
+            <Button
+              onClick={() => setLocation("/tutorial")}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300 text-blue-600 hover:text-blue-700 ml-auto"
+            >
+              📚 Tutorial
+            </Button>
+            <Button
+              onClick={() => logout()}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300 text-red-600 hover:text-red-700"
+            >
+              Sair
+            </Button>
           </div>
 
           {/* Table */}
