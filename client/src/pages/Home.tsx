@@ -5,6 +5,7 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Download, RotateCcw, RotateCw, Upload, File, Printer, Lock, Edit3 } from "lucide-react";
+import { compressImage, formatFileSize } from "@/lib/imageCompression";
 
 interface Guest {
   id: string;
@@ -82,39 +83,66 @@ function safeLocalStorageSet(key: string, value: string): void {
   }
 }
 
-// Fazer upload de arquivo via API do servidor
+// Fazer upload de arquivo via API do servidor com compressão de imagens
 async function uploadFileToServer(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const fileData = e.target?.result as string;
+  try {
+    let fileData = "";
+    let fileName = file.name;
+    let contentType = file.type || "application/octet-stream";
+
+    // Comprimir imagens para reduzir tamanho
+    if (file.type.startsWith("image/")) {
       try {
-        const resp = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileName: file.name,
-            fileData,
-            contentType: file.type || "application/octet-stream",
-          }),
-        });
-        if (!resp.ok) {
-          // Fallback: usar base64 local se o servidor falhar
-          console.warn("[Upload] Servidor indisponível, usando base64 local.");
-          resolve(fileData);
-          return;
-        }
-        const { url } = await resp.json();
-        resolve(url);
+        const compressed = await compressImage(file);
+        fileData = compressed.data;
+        console.log(`[Upload] Imagem comprimida: ${formatFileSize(file.size)} -> ${formatFileSize(compressed.size)}`);
       } catch (err) {
-        // Fallback: usar base64 local
-        console.warn("[Upload] Erro no upload, usando base64 local:", err);
-        resolve(fileData);
+        console.warn("[Upload] Falha ao comprimir imagem, usando original:", err);
+        fileData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+          reader.readAsDataURL(file);
+        });
       }
-    };
-    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
-    reader.readAsDataURL(file);
-  });
+    } else {
+      // Para arquivos não-imagem, ler normalmente
+      fileData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const resp = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName,
+        fileData,
+        contentType,
+      }),
+    });
+
+    if (!resp.ok) {
+      // Fallback: usar base64 local se o servidor falhar
+      console.warn("[Upload] Servidor indisponível, usando base64 local.");
+      return fileData;
+    }
+
+    const { url } = await resp.json();
+    return url;
+  } catch (err) {
+    // Fallback: usar base64 local
+    console.warn("[Upload] Erro no upload, usando base64 local:", err);
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+      reader.readAsDataURL(file);
+    });
+  }
 }
 
 // Obter dia atual do mês

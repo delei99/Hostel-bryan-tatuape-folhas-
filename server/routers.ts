@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
-import { getUserAuthorization, createUserAuthorization, approveUserAuthorization, rejectUserAuthorization, getPendingAuthorizations } from "./db";
+import { getUserAuthorization, createUserAuthorization, approveUserAuthorization, rejectUserAuthorization, getPendingAuthorizations, getAllRoomsData, getRoomData, saveAllRoomsData } from "./db";
 import { TRPCError } from "@trpc/server";
 
 export const appRouter = router({
@@ -17,6 +17,35 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+
+  rooms: router({
+    getAllRoomsData: protectedProcedure.query(async () => {
+      return await getAllRoomsData();
+    }),
+    
+    getRoomData: protectedProcedure
+      .input((val: unknown) => {
+        if (typeof val === 'object' && val !== null && 'roomNumber' in val) {
+          return val as { roomNumber: number };
+        }
+        throw new Error('Invalid input');
+      })
+      .query(async ({ input }) => {
+        return await getRoomData(input.roomNumber);
+      }),
+    
+    saveAllRoomsData: protectedProcedure
+      .input((val: unknown) => {
+        if (Array.isArray(val)) {
+          return val as any[];
+        }
+        throw new Error('Invalid input');
+      })
+      .mutation(async ({ input }) => {
+        await saveAllRoomsData(input);
+        return { success: true };
+      }),
   }),
 
   authorization: router({

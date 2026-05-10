@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, userAuthorizations, InsertUserAuthorization } from "../drizzle/schema";
+import { InsertUser, users, userAuthorizations, InsertUserAuthorization, rooms, guests, InsertRoom, InsertGuest } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -148,4 +148,107 @@ export async function getPendingAuthorizations() {
     .select()
     .from(userAuthorizations)
     .where(eq(userAuthorizations.status, "pending"));
+}
+
+// Funções para quartos e hóspedes
+export async function getAllRoomsData() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const allRooms = await db.select().from(rooms);
+  const allGuests = await db.select().from(guests);
+  
+  return allRooms.map(room => ({
+    ...room,
+    guests: allGuests.filter(guest => guest.roomId === room.id)
+  }));
+}
+
+export async function getRoomData(roomNumber: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const room = await db.select().from(rooms).where(eq(rooms.roomNumber, roomNumber)).limit(1);
+  if (room.length === 0) return undefined;
+  
+  const roomGuests = await db.select().from(guests).where(eq(guests.roomId, room[0].id));
+  
+  return {
+    ...room[0],
+    guests: roomGuests
+  };
+}
+
+export async function updateGuestData(guestData: InsertGuest) {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Usar day + roomId como identificador único para o hóspede no dia
+  const existing = await db
+    .select()
+    .from(guests)
+    .where(eq(guests.roomId, guestData.roomId!))
+    .limit(1)
+    .then(results => results.filter(r => r.day === guestData.day));
+    
+  if (existing.length > 0) {
+    await db.update(guests).set(guestData).where(eq(guests.id, existing[0].id));
+  } else {
+    await db.insert(guests).values(guestData);
+  }
+}
+
+export async function saveAllRoomsData(roomsData: any[]) {
+  const db = await getDb();
+  if (!db) return;
+  
+  for (const roomData of roomsData) {
+    // 1. Upsert room
+    const existingRoom = await db.select().from(rooms).where(eq(rooms.roomNumber, roomData.roomNumber)).limit(1);
+    let roomId: number;
+    
+    if (existingRoom.length > 0) {
+      roomId = existingRoom[0].id;
+    } else {
+      const result = await db.insert(rooms).values({ roomNumber: roomData.roomNumber });
+      roomId = (result[0] as any).insertId;
+    }
+    
+    // 2. Upsert guests
+    for (const guest of roomData.guests) {
+      const guestInsert: InsertGuest = {
+        roomId,
+        day: guest.day,
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        documentNumber: guest.documentNumber,
+        documentFile: guest.documentFile,
+        documentFileName: guest.documentFileName,
+        photoFile: guest.photoFile,
+        photoFileName: guest.photoFileName,
+        reservationEngine: guest.reservationEngine,
+        daily: guest.daily,
+        launch: guest.launch,
+        payment: guest.payment,
+        finalBalance: guest.finalBalance,
+        paymentMethod: guest.paymentMethod,
+        entryTime: guest.entryTime,
+        exitTime: guest.exitTime,
+        cpfValid: guest.cpfValid ? 1 : 0,
+      };
+      
+      const existingGuest = await db
+        .select()
+        .from(guests)
+        .where(eq(guests.roomId, roomId))
+        .limit(1)
+        .then(results => results.filter(r => r.day === guest.day));
+        
+      if (existingGuest.length > 0) {
+        await db.update(guests).set(guestInsert).where(eq(guests.id, existingGuest[0].id));
+      } else {
+        await db.insert(guests).values(guestInsert);
+      }
+    }
+  }
 }

@@ -39,3 +39,41 @@ export const userAuthorizations = mysqlTable("user_authorizations", {
 
 export type UserAuthorization = typeof userAuthorizations.$inferSelect;
 export type InsertUserAuthorization = typeof userAuthorizations.$inferInsert;
+
+// Tabela de quartos
+export const rooms = mysqlTable("rooms", {
+  id: int("id").autoincrement().primaryKey(),
+  roomNumber: int("roomNumber").notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// Tabela de hóspedes
+export const guests = mysqlTable("guests", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").notNull(),
+  day: varchar("day", { length: 10 }).notNull(), // "01", "02", etc.
+  firstName: text("firstName"),
+  lastName: text("lastName"),
+  documentNumber: varchar("documentNumber", { length: 20 }),
+  documentFile: text("documentFile"), // URL do arquivo no S3
+  documentFileName: text("documentFileName"),
+  photoFile: text("photoFile"), // URL do arquivo no S3
+  photoFileName: text("photoFileName"),
+  reservationEngine: text("reservationEngine"),
+  daily: varchar("daily", { length: 20 }),
+  launch: varchar("launch", { length: 20 }),
+  payment: varchar("payment", { length: 20 }),
+  finalBalance: varchar("finalBalance", { length: 20 }),
+  paymentMethod: text("paymentMethod"),
+  entryTime: varchar("entryTime", { length: 10 }),
+  exitTime: varchar("exitTime", { length: 10 }),
+  cpfValid: int("cpfValid").default(0), // 0 ou 1
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Room = typeof rooms.$inferSelect;
+export type InsertRoom = typeof rooms.$inferInsert;
+export type Guest = typeof guests.$inferSelect;
+export type InsertGuest = typeof guests.$inferInsert;
