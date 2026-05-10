@@ -106,7 +106,7 @@ export const appRouter = router({
             message: 'Apenas administradores podem rejeitar solicitações',
           });
         }
-        await rejectUserAuthorization(input.authId);
+        await rejectUserAuthorization(input.authId, ctx.user.id);
         return { success: true };
       }),
   }),
