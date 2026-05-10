@@ -1,39 +1,21 @@
 services:
-  # Banco de Dados PostgreSQL
-  - type: pserv
-    name: hostel-db
-    plan: free
-    disk:
-      name: hostel-db-data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 1
-    # Variáveis de ambiente para o banco de dados (opcional, se precisar de configurações específicas)
-    envVars:
-      - key: PG_VERSION
-        value: 16
-
   # Web Service (Aplicação Node.js)
   - type: web
     name: hostel-bryan
-    env: node
+    runtime: node
     plan: free
     buildCommand: pnpm install && pnpm build
     startCommand: pnpm start
     healthCheckPath: /
-    # Conecta o Web Service ao banco de dados criado acima
     envVars:
       - key: DATABASE_URL
         fromDatabase: { name: "hostel-db", property: "connectionString" }
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000 # Render usa a porta 10000 por padrão
-      # Adicione outras variáveis de ambiente necessárias aqui, como as chaves S3 se não estiverem no código
-      # - key: AWS_ACCESS_KEY_ID
-      #   value: seu_access_key
-      # - key: AWS_SECRET_ACCESS_KEY
-      #   value: seu_secret_access_key
-      # - key: AWS_BUCKET_NAME
-      #   value: seu_bucket_name
-      # - key: AWS_REGION
-      #   value: sua_regiao_aws
+
+databases:
+  # Banco de Dados PostgreSQL Nativo do Render
+  - name: hostel-db
+    plan: free
+    databaseName: hostel_db
+    user: hostel_user
